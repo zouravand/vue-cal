@@ -16,6 +16,7 @@ export const eventDefaults = {
   background: false,
   allDay: false,
   segments: null,
+  repeat: null,
   daysCount: 1,
   deletable: true,
   deleting: false,
@@ -315,18 +316,40 @@ export const updateEventPosition = (event, vuecal) => {
  * @param {Object} event The event to test.
  * @param {Date} start The start of range date object.
  * @param {Date} end The end of range date object.
- * @return {Boolean}
+ * @return {Boolean} true if event is in given range.
  */
 export const eventInRange = (event, start, end) => {
   // Check if all-day or timeless event (if date but no time there won't be a `:` in event.start).
-  if (event.allDay || event.start.indexOf(':') === -1) {
+  if (event.allDay || !event.start.includes(':')) {
     // Get the date and discard the time if any, then check it's within the date range.
     const eventStart = new Date(event.startDate).setHours(0, 0, 0, 0)
     return (eventStart >= new Date(start).setHours(0, 0, 0, 0) &&
       eventStart <= new Date(end).setHours(0, 0, 0, 0))
   }
 
+  if (event.repeat) return recurringEventInRange(event, start, end)
+
   const startTimestamp = event.startDate.getTime()
   const endTimestamp = event.endDate.getTime()
   return startTimestamp < end.getTime() && endTimestamp > start.getTime()
+}
+
+export const recurringEventInRange = (event, start, end) => {
+  const endTimestamp = Math.min(end.getTime(), (new Date(event.repeat.until)).getTime())
+
+  console.log({ start, title: event.title, eStart: event.startDate.getTime(), end: end.getTime() }, event.startDate.getTime() > end.getTime())
+
+  if (end.getTime() <= event.startDate.getTime()) return false
+
+  let inRange = false
+  let tmpDate = start
+  while (tmpDate.getTime() < endTimestamp) {
+    if (event.repeat.days.includes(tmpDate.getDay() || 7)) {
+      inRange = true
+      break
+    }
+    tmpDate = tmpDate.addDays(1)
+  }
+
+  return inRange
 }

@@ -3358,10 +3358,9 @@ export default {
         title: 'Tennis',
         content: '<i class="v-icon material-icons">sports_tennis</i>',
         class: 'sport',
-        recurring: {
+        repeat: {
           days: [1, 3],
-          start: '2018-11-20',
-          end: '2018-11-20'
+          until: '2018-11-22'
         }
       },
       {
@@ -3370,10 +3369,9 @@ export default {
         title: 'Piano lesson',
         content: '<i class="v-icon material-icons">queue_music</i>',
         class: 'leisure',
-        recurring: {
-          days: [3],
-          start: '2018-11-22',
-          end: '2018-11-22'
+        repeat: {
+          days: [3, 4],
+          until: '2018-12-23'
         }
       }
     ],

@@ -969,7 +969,6 @@ export default {
     hasSplits () {
       return !!this.splitDays.length && ['week', 'day'].includes(this.view.id)
     },
-
     contentMinWidth () {
       let minWidth = null
 
@@ -978,7 +977,6 @@ export default {
 
       return minWidth
     },
-
     minTimestamp () {
       let date = null
       if (this.minDate && typeof this.minDate === 'string') date = stringToDate(this.minDate)
