@@ -70,6 +70,9 @@
           v-list-item(href="#ex--multiple-day-events" v-scroll-to="'#ex--multiple-day-events'")
             | Multiple day events
             v-chip.xsmall.ml-2(small color="blue" outlined) updated
+          v-list-item(href="#ex--recurring-events" v-scroll-to="'#ex--recurring-events'")
+            | Recurring events
+            v-chip.xsmall.ml-2(small color="primary" outlined) new
           v-list-item(href="#ex--overlapping-events" v-scroll-to="'#ex--overlapping-events'")
             | Overlapping events
             v-chip.xsmall.ml-2(small color="blue" outlined) updated
