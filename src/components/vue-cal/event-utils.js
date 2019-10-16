@@ -337,12 +337,14 @@ export const eventInRange = (event, start, end) => {
 export const recurringEventInRange = (event, start, end) => {
   const endTimestamp = Math.min(end.getTime(), (new Date(event.repeat.until)).getTime())
 
-  console.log({ start, title: event.title, eStart: event.startDate.getTime(), end: end.getTime() }, event.startDate.getTime() > end.getTime())
+  console.log({ start, title: event.title, eStart: event.startDate, end, eventComesLater: event.startDate.getTime() >= end.getTime() })
 
+  // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
 
   let inRange = false
   let tmpDate = start
+  // For each day of the range, find if the current event has this weekday in its weekdays repeat array.
   while (tmpDate.getTime() < endTimestamp) {
     if (event.repeat.days.includes(tmpDate.getDay() || 7)) {
       inRange = true

@@ -1248,8 +1248,6 @@
   v-card.my-2.ma-auto.main-content
     vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
       selected-date="2018-11-19"
-      :time-from="8 * 60"
-      :time-to="23 * 60"
       hide-weekends
       events-count-on-year-view
       editable-events
@@ -3354,6 +3352,30 @@ export default {
       }
     ],
     recurringEvents: [
+      // @todo: repeated multiple-day events.
+      // {
+      //   start: '2018-11-19 23:00',
+      //   end: '2018-11-20 03:00',
+      //   title: 'Nightclub',
+      //   content: '<i class="v-icon material-icons">local_drink</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     days: [1, 2],
+      //     until: '2018-11-30'
+      //   }
+      // },
+      // @todo: repeated all-day events.
+      // {
+      //   start: '2018-11-19',
+      //   end: '2018-11-19',
+      //   title: 'Pizza day!',
+      //   content: '<i class="v-icon material-icons">local_food</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     days: [1],
+      //     until: '2018-11-30'
+      //   }
+      // },
       {
         start: '2018-11-20 18:00',
         end: '2018-11-20 20:00',
@@ -3361,8 +3383,8 @@ export default {
         content: '<i class="v-icon material-icons">sports_tennis</i>',
         class: 'sport',
         repeat: {
-          days: [1, 3],
-          until: '2018-11-22'
+          days: [2, 4],
+          until: '2018-11-28'
         }
       },
       {
@@ -3373,7 +3395,7 @@ export default {
         class: 'leisure',
         repeat: {
           days: [3, 4],
-          until: '2018-12-23'
+          until: '2018-12-26'
         }
       }
     ],
