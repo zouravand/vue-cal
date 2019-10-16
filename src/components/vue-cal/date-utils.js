@@ -57,10 +57,10 @@ const nth = d => {
 }
 
 // Time in minutes.
-export const formatTime = (time, format = 'HH:mm') => {
+export const formatTime = (time, format = 'HH:mm', texts) => {
   const H = Math.floor(time / 60)
   const h = H % 12 ? H % 12 : 12
-  const am = H < 12 ? 'am' : 'pm'
+  const am = (texts || { am: 'am', pm: 'pm' })[H < 12 ? 'am' : 'pm']
   const m = Math.floor(time % 60)
   const timeObj = {
     H,
@@ -93,6 +93,7 @@ export const formatDate = (date, format = 'yyyy-mm-dd', texts) => {
     mm: (m < 10 ? '0' : '') + m, // 01 to 12.
     mmm: texts.months[m - 1].substr(0, 3), // Jan to Dec.
     mmmm: texts.months[m - 1], // January to December.
+    mmmmG: (texts.monthsGenitive || texts.months)[m - 1], // January to December in genitive form (Greek...)
     yyyy: date.getFullYear(), // 2018.
     yy: date.getFullYear().toString().substr(2, 4) // 18.
   }
