@@ -163,7 +163,6 @@
       - do all the @todo
       - cleanup mutableEvents
       - check event returned from all emitted events / always return view events not mutable ones
-      - add recurring events
       - check overlaps only on the cell that has changed on event create/drag/background change
       Multiple-day events:
       - Fix event segments when dragging too fast on x axis.
@@ -1251,6 +1250,7 @@
       hide-weekends
       events-count-on-year-view
       editable-events
+      show-all-day-events
       :events="recurringEvents")
   sshpre(language="html-vue" label="Vue Template").
     &lt;vue-cal selected-date="2018-11-19"
@@ -3380,17 +3380,18 @@ export default {
       //   }
       // },
       // @todo: repeated all-day events.
-      // {
-      //   start: '2018-11-19',
-      //   end: '2018-11-19',
-      //   title: 'Pizza day!',
-      //   content: '<i class="v-icon material-icons">local_food</i>',
-      //   class: 'leisure',
-      //   repeat: {
-      //     days: [1],
-      //     until: '2018-11-30'
-      //   }
-      // },
+      {
+        start: '2018-11-19',
+        end: '2018-11-19',
+        title: 'Pizza day!',
+        content: '<i class="v-icon material-icons">local_food</i>',
+        class: 'leisure',
+        allDay: true,
+        repeat: {
+          days: [1],
+          until: '2018-11-30'
+        }
+      },
       {
         start: '2018-11-20 18:00',
         end: '2018-11-20 20:00',
