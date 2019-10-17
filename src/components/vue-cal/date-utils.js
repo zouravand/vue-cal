@@ -131,3 +131,13 @@ export const countDays = (start, end) => {
   let timezoneDiffMs = (new Date(end).getTimezoneOffset() - new Date(start).getTimezoneOffset()) * 60 * 1000
   return Math.ceil((end - start - timezoneDiffMs) / (24 * 3600 * 1000))
 }
+
+/**
+ * Take 2 dates and check if within the same time step (useful in overlapping events).
+ *
+ * @return {Boolean} `true` if their time is included in the same time step,
+ *                   this means these 2 dates are very close.
+ */
+export const datesInSameTimeStep = (date1, date2, timeStep) => {
+  return Math.abs(date1.getTime() - date2.getTime()) <= timeStep * 60 * 1000
+}
