@@ -1235,18 +1235,24 @@
   h4.title
     a(href="#ex--recurring-events") # Recurring events
     a#ex--recurring-events(name="ex--recurring-events")
+  p You can repeat an event:
+  ul
+    li On certain week days - by providing a #[span.code weekdays] array containing the weekdays numbers (1 to 7 for Sunday).
+    li Every month - by providing a #[span.code every: "month"] property.
+    li Every year - by providing a #[span.code every: "year"] property.
+    li Forever; Or until an expiry date - by providing an #[span.code until: {String}] property.
   p.
     Recurrring events work like a set of single day events linked together.#[br]
-    Deleting one of the day of a recurring event, will also delete all the other days.#[br]
-    Updating the duration by dragging or changing the title will also update on all the days.#[br]
-    Try to resize, rename and delete the events.#[br]You can also resize horizontally thanks to
-    the option #[span.code resize-x].
-  highlight-message(type="tips").
-    3 CSS classes are available to target the event first day, the last day and all the days in between:
-    #[span.code event-start], #[span.code event-middle], #[span.code event-end].
+    That means, deleting, resizing or editing one of the day will apply to all the other days.#[br]
+    Try to resize, rename and delete the events.#[br]
+  //- @todo: every x day.
+  //- @todo: repeat multiple day events.
+  //- @todo: check years/year views event counts.
   v-card.my-2.ma-auto.main-content
     vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
       selected-date="2018-11-19"
+      :time-from="8 * 60"
+      :time-to="23 * 60"
       hide-weekends
       events-count-on-year-view
       editable-events
@@ -1490,7 +1496,7 @@
         end: '2019-02-12',
         title: 'Day off!',
         content: '&lt;i class="v-icon material-icons"&gt;beach_access&lt;/i&gt;',
-        class: 'beach',
+        class: 'yellow-event',
         allDay: true
       },
       {
@@ -1498,7 +1504,7 @@
         end: '2019-02-14',
         title: 'Valentine\'s day',
         content: '&lt;i class="v-icon material-icons"&gt;favorite_outline&lt;/i&gt;',
-        class: 'love',
+        class: 'pink-event',
         allDay: true
       },
       ...
@@ -1508,8 +1514,8 @@
     .vuecal__cell-content {align-self: flex-start;}
     .vuecal__cell-date {text-align: right;padding: 4px;}
 
-    .vuecal--week-view .vuecal__bg .vuecal__event--all-day.love,
-    .vuecal--day-view .vuecal__bg .vuecal__event--all-day.love {right: 50%;}
+    .vuecal--week-view .vuecal__bg .vuecal__event--all-day.pink-event,
+    .vuecal--day-view .vuecal__bg .vuecal__event--all-day.pink-event {right: 50%;}
     .vuecal--week-view .vuecal__bg .vuecal__event--all-day.leisure,
     .vuecal--day-view .vuecal__bg .vuecal__event--all-day.leisure {left: 50%;}
 
@@ -3375,21 +3381,21 @@ export default {
       //   content: '<i class="v-icon material-icons">local_drink</i>',
       //   class: 'leisure',
       //   repeat: {
-      //     days: [1, 2],
+      //     weekdays: [1, 2],
       //     until: '2018-11-30'
       //   }
       // },
-      // @todo: repeated all-day events.
+      // No-expiry repeated all-day event.
+      // Can repeat forever but from is fixed date.
       {
-        start: '2018-11-19',
-        end: '2018-11-19',
+        start: '2018-11-23', // You can put time or not, will be discarded.
+        end: '2018-11-23',
         title: 'Pizza day!',
-        content: '<i class="v-icon material-icons">local_food</i>',
-        class: 'leisure',
+        content: '<i class="v-icon material-icons">local_pizza</i>',
+        class: 'pink-event',
         allDay: true,
         repeat: {
-          days: [1],
-          until: '2018-11-30'
+          weekdays: [5] // If original event day is not in these days, original event will still show up.
         }
       },
       {
@@ -3399,8 +3405,8 @@ export default {
         content: '<i class="v-icon material-icons">sports_tennis</i>',
         class: 'sport',
         repeat: {
-          days: [2, 4],
-          until: '2018-11-28'
+          weekdays: [2, 4],
+          until: '2018-11-28' // Don't need a time here as it will take the same as original event date.
         }
       },
       {
@@ -3410,10 +3416,47 @@ export default {
         content: '<i class="v-icon material-icons">queue_music</i>',
         class: 'leisure',
         repeat: {
-          days: [3, 4],
+          weekdays: [3, 4],
           until: '2018-12-26'
         }
-      }
+      },
+      {
+        start: '2018-11-01',
+        end: '2018-11-01',
+        title: 'Crêpes day',
+        content: '<i class="v-icon material-icons">queue_music</i>',
+        class: 'yellow-event',
+        allDay: true,
+        repeat: {
+          every: 'month',
+          until: '2019-12-26'
+        }
+      },
+      {
+        start: '2015-06-15',
+        end: '2015-06-15',
+        title: 'My Birthday',
+        content: '<i class="v-icon material-icons">cake</i>',
+        class: 'blue-event',
+        allDay: true,
+        repeat: {
+          every: 'year'
+        }
+      },
+      // @todo: every x days.
+      /* {
+        start: '2018-11-22 10:00',
+        end: '2018-11-22 12:00',
+        title: 'Piano lesson',
+        content: '<i class="v-icon material-icons">queue_music</i>',
+        class: 'leisure',
+        repeat: {
+          // every: 'month',
+          // every: 'year'
+          // every: 14 // days.
+          until: '2018-12-26'
+        }
+      } */
     ],
     allDayEvents: [
       {
@@ -3421,7 +3464,7 @@ export default {
         end: '2019-02-12',
         title: 'Day off!',
         content: '<i class="v-icon material-icons">beach_access</i>',
-        class: 'beach',
+        class: 'yellow-event',
         allDay: true
       },
       {
@@ -3429,7 +3472,7 @@ export default {
         end: '2019-02-14',
         title: 'Valentine\'s day',
         content: '<i class="v-icon material-icons">favorite_outline</i>',
-        class: 'love',
+        class: 'pink-event',
         allDay: true
       },
       {
@@ -3853,9 +3896,9 @@ $primary: #42b983;
 .vuecal__event.leisure {background-color: rgba(253, 156, 66, 0.85);border: 1px solid rgb(233, 136, 46);color: #fff;}
 .vuecal__event.health {background-color: rgba(164, 230, 210, 0.9);border: 1px solid rgb(144, 210, 190);}
 .vuecal__event.sport {background-color: rgba(255, 102, 102, 0.85);border: 1px solid rgb(235, 82, 82);color: #fff;}
-.vuecal__event.love {background-color: rgba(255, 58, 143, 0.7);border: 1px solid rgb(235, 38, 123);color: #fff;}
+.vuecal__event.pink-event {background-color: rgba(255, 58, 143, 0.7);border: 1px solid rgb(235, 38, 123);color: #fff;}
 .vuecal__event.blue-event {background-color: rgba(100, 200, 255, 0.8);border: 1px solid rgb(80, 180, 235);color: #fff;}
-.vuecal__event.beach {background-color: rgba(255, 200, 90, 0.75);border: 1px solid #ffc356;}
+.vuecal__event.yellow-event {background-color: rgba(255, 200, 90, 0.75);border: 1px solid #ffc356;}
 
 .vuecal__event.lunch {
   background: repeating-linear-gradient(45deg, transparent, transparent 10px, #f2f2f2 10px, #f2f2f2 20px);
@@ -3927,8 +3970,8 @@ $primary: #42b983;
     padding: 4px;
   }
 
-  &.vuecal--week-view .vuecal__bg .vuecal__event--all-day.love,
-  &.vuecal--day-view .vuecal__bg .vuecal__event--all-day.love {right: 50%;}
+  &.vuecal--week-view .vuecal__bg .vuecal__event--all-day.pink-event,
+  &.vuecal--day-view .vuecal__bg .vuecal__event--all-day.pink-event {right: 50%;}
   &.vuecal--week-view .vuecal__bg .vuecal__event--all-day.leisure,
   &.vuecal--day-view .vuecal__bg .vuecal__event--all-day.leisure {left: 50%;}
 }

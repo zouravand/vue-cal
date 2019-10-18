@@ -334,9 +334,11 @@ export const eventInRange = (event, start, end) => {
   // Check if all-day or timeless event (if date but no time there won't be a `:` in event.start).
   if (event.allDay || !event.start.includes(':')) {
     // Get the date and discard the time if any, then check it's within the date range.
-    const eventStart = new Date(event.startDate).setHours(0, 0, 0, 0)
-    return (eventStart >= new Date(start).setHours(0, 0, 0, 0) &&
-      eventStart <= new Date(end).setHours(0, 0, 0, 0))
+    const eventStartMidnight = new Date(event.startDate).setHours(0, 0, 0, 0)
+    const startMidnight = new Date(start).setHours(0, 0, 0, 0)
+    const endMidnight = new Date(end).setHours(23, 59, 59, 999)
+    const inRange = eventStartMidnight >= startMidnight && eventStartMidnight <= endMidnight
+    return inRange || (event.repeat && recurringEventInRange(event, new Date(startMidnight), new Date(endMidnight)))
   }
 
   if (event.repeat) return recurringEventInRange(event, start, end)
@@ -346,24 +348,33 @@ export const eventInRange = (event, start, end) => {
   return startTimestamp < end.getTime() && endTimestamp > start.getTime()
 }
 
+/**
+ * Tells whether a recurring event is in a given date range, even partially.
+ * That means: first check the original event date, then also check if range
+ * contains one of the repeated days.
+ *
+ * @param {Object} event The event to test.
+ * @param {Date} start The start of range date object.
+ * @param {Date} end The end of range date object.
+ * @return {Boolean} true if in range, even partially.
+ */
 export const recurringEventInRange = (event, start, end) => {
-  const endTimestamp = Math.min(end.getTime(), (new Date(event.repeat.until)).getTime())
-
-  console.log({ start, title: event.title, eStart: event.startDate, end, eventComesLater: event.startDate.getTime() >= end.getTime() })
-
   // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
 
-  let inRange = false
+  const endTimestamp = Math.min(end.getTime(), event.repeat.until ? (new Date(event.repeat.until)).getTime() : Infinity)
+  const eventMonthDate = event.startDate.getDate()
+  const eventMonth = event.startDate.getMonth()
   let tmpDate = start
-  // For each day of the range, find if the current event has this weekday in its weekdays repeat array.
+  // For each day of the range, find if the current event is repeated within this day.
+  // E.g. if the range contains a weekday of the event weekdays repeat array.
   while (tmpDate.getTime() < endTimestamp) {
-    if (event.repeat.days.includes(tmpDate.getDay() || 7)) {
-      inRange = true
-      break
-    }
+    // This list of cases don't waste execution time:
+    // The JS does not execute the remainder of each condition if first part fails (e.g. `event.repeat.weekdays &&`).
+    const repeatWeekdays = event.repeat.weekdays && event.repeat.weekdays.includes(tmpDate.getDay() || 7)
+    const repeatMonth = event.repeat.every === 'month' && eventMonthDate === tmpDate.getDate()
+    const repeatYear = event.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
+    if (repeatWeekdays || repeatMonth || repeatYear) return true
     tmpDate = tmpDate.addDays(1)
   }
-
-  return inRange
 }
