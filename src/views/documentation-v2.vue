@@ -3385,7 +3385,6 @@ export default {
       //     until: '2018-11-30'
       //   }
       // },
-      // No-expiry repeated all-day event.
       // Can repeat forever but from is fixed date.
       {
         start: '2018-11-23', // You can put time or not, will be discarded.
@@ -3451,9 +3450,7 @@ export default {
         content: '<i class="v-icon material-icons">queue_music</i>',
         class: 'leisure',
         repeat: {
-          // every: 'month',
-          // every: 'year'
-          // every: 14 // days.
+          every: 14 // days.
           until: '2018-12-26'
         }
       } */
