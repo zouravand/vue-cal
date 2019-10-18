@@ -465,9 +465,9 @@ export default {
           this.view.outOfScopeEvents = []
           events.forEach(e => {
             if (eventInRange(e, firstCellDate, startDate) || eventInRange(e, endDate, lastCellDate)) {
-              // Only add to the view events array if not already there (multiple-day events case).
+              // Only add events to the view.outOfScopeEvents array if not already in view.events
+              // (multiple-day events case).
               if (!this.view.events.some(e2 => e2._eid === e._eid)) this.view.outOfScopeEvents.push(e)
-              // if (!this.view.events.some(e2 => e2._eid === e._eid)) this.view.events.push(e)
             }
           })
         }
