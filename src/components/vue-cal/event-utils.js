@@ -366,7 +366,8 @@ export const recurringEventInRange = (event, start, end) => {
   const eventMonthDate = event.startDate.getDate()
   const eventMonth = event.startDate.getMonth()
   let repeatXDays = !isNaN(event.repeat.every)
-  let repeatDaysModulo = repeatXDays ? event.repeat.every * dayMilliseconds : null
+  const repeatDaysModulo = repeatXDays ? event.repeat.every * dayMilliseconds : null
+  const eventStartMidnight = repeatXDays ? new Date(event.startDate).setHours(0, 0, 0, 0) : null
   let tmpDate = start
   // For each day of the range, find if the current event is repeated within this day.
   // E.g. if the range contains a weekday of the event weekdays repeat array.
@@ -374,10 +375,13 @@ export const recurringEventInRange = (event, start, end) => {
     // This list of cases don't waste execution time:
     // The JS does not execute the remainder of each condition if first part fails (e.g. `event.repeat.weekdays &&`).
     const repeatWeekdays = event.repeat.weekdays && event.repeat.weekdays.includes(tmpDate.getDay() || 7)
-    // repeatXDays = repeatDaysModulo && (tmpDate.getTime() - event.startDate.getTime() % repeatDaysModulo)
+    // Work with timestamps - for modulo - rather than month dates because timestamps always increase, but month dates
+    // are reset to 1 after 30/31.
+    // The calculation is way more complex with month dates: need to check when crossing end of month and month length.
+    repeatXDays = repeatDaysModulo && !((tmpDate.getTime() - eventStartMidnight) % repeatDaysModulo)
     const repeatMonth = event.repeat.every === 'month' && eventMonthDate === tmpDate.getDate()
     const repeatYear = event.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
-    if (repeatWeekdays || repeatMonth || repeatYear) return true
+    if (repeatWeekdays || repeatXDays || repeatMonth || repeatYear) return true
     tmpDate = tmpDate.addDays(1)
   }
 }

@@ -3442,18 +3442,17 @@ export default {
           every: 'year'
         }
       },
-      // @todo: every x days.
-      /* {
-        start: '2018-11-22 10:00',
-        end: '2018-11-22 12:00',
-        title: 'Piano lesson',
-        content: '<i class="v-icon material-icons">queue_music</i>',
+      {
+        start: '2018-11-21 18:30',
+        end: '2018-11-21 19:30',
+        title: 'Apero time',
+        content: '<i class="v-icon material-icons">local_bar</i>',
         class: 'leisure',
         repeat: {
-          every: 14 // days.
-          until: '2018-12-26'
+          every: 14,
+          until: '2019-02-01'
         }
-      } */
+      }
     ],
     allDayEvents: [
       {
