@@ -43,7 +43,7 @@
 
 <script>
 import { selectCell } from './cell-utils'
-import { updateEventPosition, checkCellOverlappingEvents, eventInRange } from './event-utils'
+import { updateEventPosition, checkCellOverlappingEvents, eventInRange, recurringEventInRange } from './event-utils'
 import Event from './event'
 
 export default {
@@ -273,17 +273,16 @@ export default {
 
         if (this.options.showAllDayEvents && this.view !== 'month') events = events.filter(e => !!e.allDay === this.allDay)
 
-        // From events in view, filter the ones that are out of time range in this cell.
+        // From events in view, filter the ones that are out of `time-from`-`time-to` range in this cell.
         if (this.options.time && ['week', 'day'].includes(this.view) && !this.allDay) {
           const { timeFrom, timeTo } = this.options
 
           events = events.filter(e => {
-            let segment = (e.daysCount > 1 && e.segments[this.data.formattedDate]) || {}
-            return (
-              e.allDay ||
-              (e.daysCount === 1 && e.startTimeMinutes < timeTo && e.endTimeMinutes > timeFrom) ||
-              (e.daysCount > 1 && (segment.startTimeMinutes < timeTo && segment.endTimeMinutes > timeFrom))
-            )
+            const segment = (e.daysCount > 1 && e.segments[this.data.formattedDate]) || {}
+            const singleDayInRange = e.daysCount === 1 && e.startTimeMinutes < timeTo && e.endTimeMinutes > timeFrom
+            const multipleDayInRange = e.daysCount > 1 && (segment.startTimeMinutes < timeTo && segment.endTimeMinutes > timeFrom)
+            const recurrMultDayInRange = e.daysCount > 1 && e.repeat && recurringEventInRange(e, cellStart, cellEnd)
+            return (e.allDay || singleDayInRange || multipleDayInRange || recurrMultDayInRange)
           })
         }
 

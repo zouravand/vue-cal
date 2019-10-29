@@ -3374,18 +3374,17 @@ export default {
     ],
     recurringEvents: [
       // @todo: repeated multiple-day events.
-      // {
-      //   start: '2018-11-19 23:00',
-      //   end: '2018-11-20 03:00',
-      //   title: 'Nightclub',
-      //   content: '<i class="v-icon material-icons">local_drink</i>',
-      //   class: 'leisure',
-      //   repeat: {
-      //     weekdays: [1, 2],
-      //     until: '2018-11-30'
-      //   }
-      // },
-      // Can repeat forever but from is fixed date.
+      {
+        start: '2018-11-19 22:00',
+        end: '2018-11-20 09:00',
+        title: 'Nightclub',
+        content: '<i class="v-icon material-icons">local_drink</i>',
+        class: 'leisure',
+        repeat: {
+          weekdays: [1],
+          until: '2018-11-30'
+        }
+      },
       {
         start: '2018-11-23', // You can put time or not, will be discarded.
         end: '2018-11-23',
