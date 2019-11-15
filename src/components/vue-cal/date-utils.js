@@ -105,8 +105,11 @@ export const formatDate = (date, format = 'yyyy-mm-dd', texts) => {
 }
 
 export const stringToDate = string => {
-  const [, y, m, d, h = 0, min = 0] = string.match(/(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/)
-  return new Date(y, parseInt(m) - 1, d, h, min)
+  if (string instanceof Date) return string
+  // Old code - less performant?
+  // const [, y, m, d, h = 0, min = 0] = string.match(/(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/)
+  // return new Date(y, parseInt(m) - 1, d, h, min)
+  return new Date(string.replace(/-/g, '/')) // replace '-' with '/' for Safari.
 }
 
 /**

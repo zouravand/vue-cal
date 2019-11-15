@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import { formatDate, stringToDate, formatTime, countDays, datesInSameTimeStep } from './date-utils'
 const defaultEventDuration = 2 // In hours.
+// This is an approximation, it will not work with DLS time.
+const approxDayMilliseconds = 24 * 3600 * 1000
 
 export const eventDefaults = {
   _eid: null,
@@ -51,7 +53,7 @@ export const createAnEvent = (dateTime, eventOptions, vuecal) => {
     startDate: dateTime,
     startTimeMinutes,
     end,
-    endDate: new Date(end.replace(/-/g, '/')), // replace '-' with '/' for Safari.
+    endDate: stringToDate(end),
     endTimeMinutes,
     segments: null,
     ...eventOptions
@@ -171,25 +173,29 @@ export const createEventSegments = (e, viewStartDate, viewEndDate, vuecal) => {
   let eventEnd = e.endDate.getTime()
   if (!e.endDate.getHours() && !e.endDate.getMinutes()) eventEnd -= 1000
 
-  // Case of repeated multiple day, but not on original dates but on later repetition.
-  // if a repetition of multiple-day event is in this function, it means it has already been
-  // fitered as matching the selected date range now we only need to create segments for display.
-  // const isRepetition = e.repeat && eventEnd <= viewStartDate.getTime()
-  // let repetitionStart = null
-
   Vue.set(e, 'segments', {})
 
   // Create 1 segment per day in the event, but only within the current view.
   let timestamp = Math.max(viewStartDate.getTime(), eventStart)
-  const end = Math.min(viewEndDate.getTime(), eventEnd)
+  let end = Math.min(viewEndDate.getTime(), eventEnd)
+
+  // Case of repeated multiple day, but not on original dates but on later repetition.
+  // if a repetition of multiple-day event is in this function, it means it has already been
+  // fitered as matching the selected date range now we only need to create segments for display.
+  const isRepetition = e.repeat && eventEnd <= viewStartDate.getTime()
+  if (isRepetition) {
+    timestamp = viewStartDate.getTime()
+    end = Math.min(viewEndDate.getTime(), e.repeat.until ? stringToDate(e.repeat.until).getTime() : viewEndDate.getTime())
+  }
 
   while (timestamp <= end) {
     // Be careful not to simply add 24 hours!
     // In case of DLS, that would cause the event to never end and browser to hang.
     const nextMidnight = (new Date(timestamp).addDays(1)).setHours(0, 0, 0)
 
-    /* if (isRepetition) {
-      let tmpDate = new Date(timestamp)
+    if (isRepetition) {
+      debugger
+      /* let tmpDate = new Date(timestamp)
       // This list of cases don't waste execution time:
       // The JS does not execute the remainder of each condition if first part fails (e.g. `event.repeat.weekdays &&`).
       const repeatWeekdays = e.repeat.weekdays && e.repeat.weekdays.includes(tmpDate.getDay() || 7)
@@ -217,9 +223,9 @@ export const createEventSegments = (e, viewStartDate, viewEndDate, vuecal) => {
           height: 0,
           top: 0
         }
-      }
+      } */
     }
-    else { */
+    else {
       const isFirstDay = timestamp === eventStart
       const isLastDay = end === eventEnd && nextMidnight >= end
       const startDate = isFirstDay ? e.startDate : new Date(timestamp)
@@ -235,7 +241,7 @@ export const createEventSegments = (e, viewStartDate, viewEndDate, vuecal) => {
         height: 0,
         top: 0
       }
-    // }
+    }
 
     timestamp = nextMidnight
   }
@@ -403,7 +409,7 @@ export const recurringEventInRange = (event, start, end) => {
   const eventMonthDate = event.startDate.getDate()
   const eventMonth = event.startDate.getMonth()
   let repeatXDays = !isNaN(event.repeat.every)
-  const repeatDaysModulo = repeatXDays ? event.repeat.every * dayMilliseconds : null
+  const repeatDaysModulo = repeatXDays ? event.repeat.every * approxDayMilliseconds : null
   const eventStartMidnight = repeatXDays ? new Date(event.startDate).setHours(0, 0, 0, 0) : null
   let tmpDate = start
   // For each day of the range, find if the current event is repeated within this day.

@@ -114,7 +114,7 @@
                       .vuecal__event-time(v-if="(event.startTimeMinutes || event.endTimeMinutes) && !(view === 'month' && event.allDay && showAllDayEvents === 'short') && !isShortMonthView")
                         | {{ formatTime(event.startTimeMinutes) }}
                         span(v-if="event.endTimeMinutes") &nbsp;- {{ formatTime(event.endTimeMinutes) }}
-                        small.days-to-end(v-if="event.daysCount > 1 && event.segments[cell.formattedDate].isFirstDay") &nbsp;+{{ event.daysCount - 1 }}{{ (texts.day[0] || '').toLowerCase() }}
+                        small.days-to-end(v-if="event.daysCount > 1 && (event.segments[cell.formattedDate] || {}).isFirstDay") &nbsp;+{{ event.daysCount - 1 }}{{ (texts.day[0] || '').toLowerCase() }}
                       .vuecal__event-content(
                         v-if="event.content && !(view === 'month' && event.allDay && showAllDayEvents === 'short') && !isShortMonthView"
                         v-html="event.content")
@@ -534,7 +534,7 @@ export default {
       if (segment) segment.endTimeMinutes = resizeAnEvent.endTimeMinutes
       event.endTimeMinutes = resizeAnEvent.endTimeMinutes
       event.end = event.end.substr(0, 11) + formatTime(event.endTimeMinutes)
-      event.endDate = new Date(event.end.replace(/-/g, '/')) // replace '-' with '/' for Safari.
+      event.endDate = stringToDate(event.end)
       event.daysCount = countDays(event.startDate, event.endDate)
 
       // Resize events horizontally if resize-x is enabled (add/remove segments).
@@ -696,7 +696,7 @@ export default {
           !([startDateF, startTime = ''] = event.start.split(' '))
           // eslint-disable-next-line
           !([hoursStart, minutesStart] = startTime.split(':'))
-          startDate = new Date(event.start.replace(/-/g, '/')) // replace '-' with '/' for Safari.
+          startDate = stringToDate(event.start)
         }
         else if (event.startDate && event.startDate instanceof Date) {
           startDateF = this.formatDate(event.startDate)
@@ -714,7 +714,7 @@ export default {
           !([endDateF, endTime = ''] = event.end.split(' '))
           // eslint-disable-next-line
           !([hoursEnd, minutesEnd] = endTime.split(':'))
-          endDate = new Date(event.end.replace(/-/g, '/')) // replace '-' with '/' for Safari.
+          endDate = stringToDate(event.end)
         }
         else if (event.endDate && event.endDate instanceof Date) {
           endDateF = this.formatDate(event.endDate)
