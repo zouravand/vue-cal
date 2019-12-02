@@ -198,68 +198,79 @@ export const removeEventSegment = e => {
  * @param {Object} vuecal the vuecal main component, to access needed methods, props, etc.
  */
 export const createEventSegments = (e, viewStartDate, viewEndDate) => {
-  const eventStart = e.startDate.getTime()
+  const viewStartTimestamp = viewStartDate.getTime()
+  const viewEndTimestamp = viewEndDate.getTime()
+  let eventStart = e.startDate.getTime()
   let eventEnd = e.endDate.getTime()
+  let repeatedEventStartFound = false
+  let timestamp, end
+
+  // @todo: I don't think we still need that:
+  // Removing 1 sec when ending at 00:00, so that we don't create a segment for nothing on last day.
   if (!e.endDate.getHours() && !e.endDate.getMinutes()) eventEnd -= 1000
 
   Vue.set(e, 'segments', {})
 
-  // Create 1 segment per day in the event, but only within the current view.
-  let timestamp = Math.max(viewStartDate.getTime(), eventStart)
-  let end = Math.min(viewEndDate.getTime(), eventEnd)
+  // Case of repeated multiple-day event, not on original dates but on later repetition.
+  // If a repetition of multiple-day event is in this function, it means it has already been
+  // filtered as matching the selected date range now we only need to create segments for display.
+  const isRepetition = e.repeat && eventEnd <= viewStartTimestamp
 
-  // Case of repeated multiple day, but not on original dates but on later repetition.
-  // if a repetition of multiple-day event is in this function, it means it has already been
-  // fitered as matching the selected date range now we only need to create segments for display.
-  const isRepetition = e.repeat && eventEnd <= viewStartDate.getTime()
-  if (isRepetition) {
-    timestamp = viewStartDate.getTime()
-    end = Math.min(viewEndDate.getTime(), e.repeat.until ? stringToDate(e.repeat.until).getTime() : viewEndDate.getTime())
+  // The goal is to create 1 segment per day in the event, but only within the current view.
+  if (!isRepetition) { // Simple case first.
+    timestamp = Math.max(viewStartTimestamp, eventStart)
+    end = Math.min(viewEndTimestamp, eventEnd)
+  }
+  else {
+    // Start at the beginning of the range, and end at soonest between `repeat.until` if any or range end.
+    // This range will most likely be too large (e.g. whole week) and we need to narrow it
+    // down in the while loop bellow.
+    // We must not create unused segments, it would break the render or result in weird behaviors.
+    timestamp = viewStartTimestamp
+    end = Math.min(
+      viewEndTimestamp,
+      e.repeat.until ? stringToDate(e.repeat.until).getTime() : viewEndTimestamp
+    )
   }
 
   while (timestamp <= end) {
+    let createSegment = false
     // Be careful not to simply add 24 hours!
     // In case of DLS, that would cause the event to never end and browser to hang.
+    // So use `addDays(1)` instead.
     const nextMidnight = (new Date(timestamp).addDays(1)).setHours(0, 0, 0)
+    let isFirstDay, isLastDay, startDate, formattedDate
 
     if (isRepetition) {
-      debugger
-      /* let tmpDate = new Date(timestamp)
-      // This list of cases don't waste execution time:
-      // The JS does not execute the remainder of each condition if first part fails (e.g. `event.repeat.weekdays &&`).
-      const repeatWeekdays = e.repeat.weekdays && e.repeat.weekdays.includes(tmpDate.getDay() || 7)
-      // Work with timestamps - for modulo - rather than month dates because timestamps always increase, but month dates
-      // are reset to 1 after 30/31.
-      // The calculation is way more complex with month dates: need to check when crossing end of month and month length.
-      repeatXDays = repeatDaysModulo && !((tmpDate.getTime() - eventStartMidnight) % repeatDaysModulo)
-      const repeatMonth = e.repeat.every === 'month' && eventMonthDate === tmpDate.getDate()
-      const repeatYear = e.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
-
-      if (repeatWeekdays || repeatXDays || repeatMonth || repeatYear) {
-        repetitionStart = tmpDate
-        const isFirstDay = timestamp === eventStart
-        const isLastDay = end === eventEnd && nextMidnight >= end
-        const startDate = isFirstDay ? e.startDate : tmpDate
-        const formattedDate = isFirstDay ? e.start.substr(0, 10) : formatDateLite(startDate)
-
-        e.segments[formattedDate] = {
-          startDate,
-          start: formattedDate,
-          startTimeMinutes: isFirstDay ? e.startTimeMinutes : 0,
-          endTimeMinutes: isLastDay ? e.endTimeMinutes : (24 * 60),
-          isFirstDay,
-          isLastDay,
-          height: 0,
-          top: 0
+      let tmpDate = new Date(timestamp)
+      let tmpDateFormatted = formatDateLite(tmpDate)
+      // If the current day in loop is a known date of the repeated event (in `e.repeat.dates`),
+      // then we found the first day of the event repetition, now update the `eventStart` and
+      // the end of the loop at current day + event days count.
+      if (repeatedEventStartFound || e.repeat.dates[tmpDateFormatted]) {
+        if (!repeatedEventStartFound) {
+          eventStart = timestamp
+          eventEnd = end = tmpDate.addDays(e.daysCount - 1).setHours(0, e.endTimeMinutes, 0)
         }
-      } */
+        repeatedEventStartFound = true
+        createSegment = true
+        // console.log('Found event repetition start:', tmpDateFormatted, 'end on', formatDateLite(new Date(end)))
+      }
+
+      isFirstDay = timestamp === eventStart
+      isLastDay = end === eventEnd && nextMidnight > end
+      startDate = isFirstDay ? new Date(new Date(eventStart).setHours(0, e.startTimeMinutes, 0)) : new Date(timestamp)
+      formattedDate = formatDateLite(startDate)
     }
     else {
-      const isFirstDay = timestamp === eventStart
-      const isLastDay = end === eventEnd && nextMidnight >= end
-      const startDate = isFirstDay ? e.startDate : new Date(timestamp)
-      const formattedDate = isFirstDay ? e.start.substr(0, 10) : formatDateLite(startDate)
+      createSegment = true
+      isFirstDay = timestamp === eventStart
+      isLastDay = end === eventEnd && nextMidnight > end
+      startDate = isFirstDay ? e.startDate : new Date(timestamp)
+      formattedDate = isFirstDay ? e.start.substr(0, 10) : formatDateLite(startDate)
+    }
 
+    if (createSegment) {
       e.segments[formattedDate] = {
         startDate,
         start: formattedDate,
@@ -273,6 +284,12 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
     }
 
     timestamp = nextMidnight
+  }
+
+  // Reset found dates after use to free up memory.
+  if (e.repeat) {
+    e.repeat.dates = []
+    delete e.repeat.inView
   }
 
   return e
@@ -425,11 +442,11 @@ export const eventInRange = (event, start, end) => {
     return inRange || (event.repeat && recurringEventInRange(event, new Date(startMidnight), new Date(endMidnight)))
   }
 
-  if (event.repeat) return recurringEventInRange(event, start, end)
-
   const startTimestamp = event.startDate.getTime()
   const endTimestamp = event.endDate.getTime()
-  return startTimestamp < end.getTime() && endTimestamp > start.getTime()
+  const inRange = startTimestamp < end.getTime() && endTimestamp > start.getTime()
+
+  return inRange || (event.repeat && recurringEventInRange(event, start, end))
 }
 
 /**
@@ -443,8 +460,17 @@ export const eventInRange = (event, start, end) => {
  * @return {Boolean} true if in range, even partially.
  */
 export const recurringEventInRange = (event, start, end) => {
+  console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
   // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
+  // Shortcut for repeated multiple-day events.
+  if (event.repeat && event.repeat.inView) {
+    const startTimestamp = event.repeat.inView.start
+    const endTimestamp = event.repeat.inView.end
+    console.log(startTimestamp < end.getTime(), endTimestamp > start.getTime(), endTimestamp)
+    // debugger
+    if (startTimestamp < end.getTime() && endTimestamp > start.getTime()) return true
+  }
 
   const endTimestamp = Math.min(end.getTime(), event.repeat.until ? (new Date(event.repeat.until)).getTime() : Infinity)
   const eventMonthDate = event.startDate.getDate()
@@ -453,23 +479,40 @@ export const recurringEventInRange = (event, start, end) => {
   const repeatDaysModulo = repeatXDays ? event.repeat.every * approxDayMilliseconds : null
   const eventStartMidnight = repeatXDays ? new Date(event.startDate).setHours(0, 0, 0, 0) : null
   let tmpDate = start
+  let tmpDateTimestamp = tmpDate.getTime()
+
   // For each day of the range, find if the current event is repeated within this day.
   // E.g. if the range contains a weekday of the event weekdays repeat array, or a day of the repeatDaysModulo.
-  while (tmpDate.getTime() < endTimestamp) {
+  while (tmpDateTimestamp < endTimestamp) {
     // This list of cases don't waste execution time:
     // The JS does not execute the remainder of each condition if first part fails (e.g. `event.repeat.weekdays &&`).
     const repeatWeekdays = event.repeat.weekdays && event.repeat.weekdays.includes(tmpDate.getDay() || 7)
     // Work with timestamps - for modulo - rather than month dates because timestamps always increase, but month dates
     // are reset to 1 after 30/31.
     // The calculation is way more complex with month dates: need to check when crossing end of month and month length.
-    repeatXDays = repeatDaysModulo && !((tmpDate.getTime() - eventStartMidnight) % repeatDaysModulo)
+    repeatXDays = repeatDaysModulo && !((tmpDateTimestamp - eventStartMidnight) % repeatDaysModulo)
+    const repeatWeek = event.repeat.every === 'week' && event.startDate.getDay() === tmpDate.getDay()
     const repeatMonth = event.repeat.every === 'month' && eventMonthDate === tmpDate.getDate()
     const repeatYear = event.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
 
     if (event.title === 'Nightclub') {
-      console.log(`${tmpDate.toLocaleDateString()}: ${event.title} in range=`, repeatWeekdays || repeatXDays || repeatMonth || repeatYear)
+      console.log(`${tmpDate.toLocaleDateString()}: ${event.title} in range=`, repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear)
     }
-    if (repeatWeekdays || repeatXDays || repeatMonth || repeatYear) return true
+    if (repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear) {
+      // If multiple-day event, we will have to create segments (in `createEventSegments`)
+      // based on the exact same rules, so once it's in the view then keep the result in an
+      // array for fast comparison.
+      if (event.daysCount > 1) {
+        if (!event.repeat.dates) event.repeat.dates = {}
+        event.repeat.dates[formatDateLite(tmpDate)] = true
+        event.repeat.inView = {
+          start: new Date(tmpDateTimestamp).setHours(0, event.startTimeMinutes, 0),
+          end: new Date(tmpDateTimestamp).addDays(event.daysCount - 1).setHours(0, event.endTimeMinutes, 0)
+        }
+      }
+      return true
+    }
     tmpDate = tmpDate.addDays(1)
+    tmpDateTimestamp = tmpDate.getTime()
   }
 }

@@ -1245,6 +1245,7 @@
   p You can repeat an event:
   ul
     li On certain week days - by providing a #[span.code weekdays] array containing the weekdays numbers (1 to 7 for Sunday).
+    li Every week - by providing a #[span.code every: "week"] property.
     li Every month - by providing a #[span.code every: "month"] property.
     li Every year - by providing a #[span.code every: "year"] property.
     li Forever; Or until an expiry date - by providing an #[span.code until: {String}] property.
@@ -3436,77 +3437,79 @@ export default {
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
         repeat: {
-          weekdays: [1],
-          until: '2018-11-30'
+          every: 'week',
+          // weekdays: [1],
+          until: '2019-11-30'
         }
       },
-      {
-        start: '2018-11-23', // You can put time or not, will be discarded.
-        end: '2018-11-23',
-        title: 'Pizza day!',
-        content: '<i class="v-icon material-icons">local_pizza</i>',
-        class: 'pink-event',
-        allDay: true,
-        repeat: {
-          weekdays: [5] // If original event day is not in these days, original event will still show up.
-        }
-      },
-      {
-        start: '2018-11-20 18:00',
-        end: '2018-11-20 20:00',
-        title: 'Tennis',
-        content: '<i class="v-icon material-icons">sports_tennis</i>',
-        class: 'sport',
-        repeat: {
-          weekdays: [2, 4],
-          until: '2018-11-28' // Don't need a time here as it will take the same as original event date.
-        }
-      },
-      {
-        start: '2018-11-22 10:00',
-        end: '2018-11-22 12:00',
-        title: 'Piano lesson',
-        content: '<i class="v-icon material-icons">queue_music</i>',
-        class: 'leisure',
-        repeat: {
-          weekdays: [3, 4],
-          until: '2018-12-26'
-        }
-      },
-      {
-        start: '2018-11-01',
-        end: '2018-11-01',
-        title: 'Crêpes day',
-        content: '<i class="v-icon material-icons">queue_music</i>',
-        class: 'yellow-event',
-        allDay: true,
-        repeat: {
-          every: 'month',
-          until: '2019-12-26'
-        }
-      },
-      {
-        start: '2015-06-15',
-        end: '2015-06-15',
-        title: 'My Birthday',
-        content: '<i class="v-icon material-icons">cake</i>',
-        class: 'blue-event',
-        allDay: true,
-        repeat: {
-          every: 'year'
-        }
-      },
-      {
-        start: '2018-11-21 18:30',
-        end: '2018-11-21 19:30',
-        title: 'Apero time',
-        content: '<i class="v-icon material-icons">local_bar</i>',
-        class: 'leisure',
-        repeat: {
-          every: 14,
-          until: '2019-02-01'
-        }
-      }
+      // All bellow are ok.
+      // {
+      //   start: '2018-11-23', // You can put time or not, will be discarded.
+      //   end: '2018-11-23',
+      //   title: 'Pizza day!',
+      //   content: '<i class="v-icon material-icons">local_pizza</i>',
+      //   class: 'pink-event',
+      //   allDay: true,
+      //   repeat: {
+      //     weekdays: [5] // If original event day is not in these days, original event will still show up.
+      //   }
+      // },
+      // {
+      //   start: '2018-11-20 18:00',
+      //   end: '2018-11-20 20:00',
+      //   title: 'Tennis',
+      //   content: '<i class="v-icon material-icons">sports_tennis</i>',
+      //   class: 'sport',
+      //   repeat: {
+      //     weekdays: [2, 4],
+      //     until: '2018-11-28' // Don't need a time here as it will take the same as original event date.
+      //   }
+      // },
+      // {
+      //   start: '2018-11-22 10:00',
+      //   end: '2018-11-22 12:00',
+      //   title: 'Piano lesson',
+      //   content: '<i class="v-icon material-icons">queue_music</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     weekdays: [3, 4],
+      //     until: '2018-12-26'
+      //   }
+      // },
+      // {
+      //   start: '2018-11-01',
+      //   end: '2018-11-01',
+      //   title: 'Crêpes day',
+      //   content: '<i class="v-icon material-icons">queue_music</i>',
+      //   class: 'yellow-event',
+      //   allDay: true,
+      //   repeat: {
+      //     every: 'month',
+      //     until: '2019-12-26'
+      //   }
+      // },
+      // {
+      //   start: '2015-06-15',
+      //   end: '2015-06-15',
+      //   title: 'My Birthday',
+      //   content: '<i class="v-icon material-icons">cake</i>',
+      //   class: 'blue-event',
+      //   allDay: true,
+      //   repeat: {
+      //     every: 'year'
+      //   }
+      // },
+      // {
+      //   start: '2018-11-21 18:30',
+      //   end: '2018-11-21 19:30',
+      //   title: 'Apero time',
+      //   content: '<i class="v-icon material-icons">local_bar</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     every: 14,
+      //     until: '2019-02-01'
+      //   }
+      // }
     ],
     allDayEvents: [
       {
