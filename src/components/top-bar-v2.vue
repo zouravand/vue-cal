@@ -4,7 +4,7 @@
       span.top-bar__title-line
       span.top-bar__title-line
       h1.layout.primary--text.px-6
-        a.layout.align-center.top-bar__logo-link(href="#top" v-scroll-to="'#top'")
+        a.layout.align-center.top-bar__logo-link.shrink(href="#top" v-scroll-to="'#top'")
           .logo.top-bar__logo {{ todayDate < 10 ? `0${todayDate}` : todayDate }}
           div.top-bar__logo-title Vue Cal&nbsp;
         span.intro Vue.js full cal&nbsp; #[span.code --no-deps --no-bs]&nbsp; :metal:
@@ -123,6 +123,7 @@ $lighter-text: #ccc;
   border-bottom: 1px solid transparent !important;
   transition: 0.3s ease-in-out all, 0.1s 0s ease-in-out border-color;
   top: 0;
+  box-sizing: content-box;
 
   .v-toolbar__content {padding: 0;}
 
@@ -154,6 +155,8 @@ $lighter-text: #ccc;
       width: 100%;
       display: block;
       z-index: -1;
+      border-left: none !important;
+      border-right: none !important;
     }
 
     &:before {
@@ -172,6 +175,7 @@ $lighter-text: #ccc;
     flex-shrink: 0;
     margin-right: 15px;
     vertical-align: middle;
+    box-sizing: border-box;
     transition: 0.2s 0s ease-in-out;
     background-color: $primary;
     width: 38px;
@@ -306,6 +310,7 @@ $lighter-text: #ccc;
 @media screen and (max-width: 600px) {
   .scrolled .top-bar__logo {transform: scale(0.7);}
 
+  .top-bar.scrolled,
   .top-bar.scrolled .v-toolbar__content,
   .scrolled .top-bar__logo-link {
     height: 32px !important;
