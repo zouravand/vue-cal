@@ -122,13 +122,14 @@
 </template>
 
 <script>
-import { isDateToday, getPreviousFirstDayOfWeek, formatDate, formatTime, stringToDate, countDays } from './date-utils'
+import { isDateToday, getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, stringToDate, countDays } from './date-utils'
 import { eventDefaults, createAnEvent, createEventSegments, addEventSegment, removeEventSegment, eventInRange } from './event-utils'
 import Header from './header'
 import WeekdaysHeadings from './weekdays-headings'
 import Cell from './cell'
 import './styles.scss'
 
+const minutesInADay = 24 * 60 // Don't do the maths every time.
 const textsDefaults = {
   weekDays: Array(7).fill(''),
   weekDaysShort: [],
@@ -174,7 +175,7 @@ export default {
     cellClickHold: { type: Boolean, default: true },
     time: { type: Boolean, default: true },
     timeFrom: { type: Number, default: 0 }, // In minutes.
-    timeTo: { type: Number, default: 24 * 60 }, // In minutes.
+    timeTo: { type: Number, default: minutesInADay }, // In minutes.
     timeStep: { type: Number, default: 60 }, // In minutes.
     timeCellHeight: { type: Number, default: 40 }, // In pixels.
     twelveHour: { type: Boolean, default: false },
@@ -320,18 +321,20 @@ export default {
       }
 
       switch (view) {
-        case 'years':
+        case 'years': {
           // Always fill first cell with a multiple of 25 years, E.g. year 2000, or 2025.
           this.view.startDate = new Date(Math.floor(date.getFullYear() / 25) * 25 || 2000, 0, 1)
           this.view.endDate = new Date(this.view.startDate.getFullYear() + 25, 0, 1)
           this.view.endDate.setSeconds(-1) // End at 23:59:59.
           break
-        case 'year':
+        }
+        case 'year': {
           this.view.startDate = new Date(date.getFullYear(), 0, 1)
           this.view.endDate = new Date(date.getFullYear() + 1, 0, 1)
           this.view.endDate.setSeconds(-1) // End at 23:59:59.
           break
-        case 'month':
+        }
+        case 'month': {
           this.view.startDate = new Date(date.getFullYear(), date.getMonth(), 1)
           this.view.endDate = new Date(date.getFullYear(), date.getMonth() + 1, 1)
           this.view.endDate.setSeconds(-1) // End at 23:59:59.
@@ -370,19 +373,22 @@ export default {
             }
           }
           break
-        case 'week':
+        }
+        case 'week': {
           const weekDaysCount = this.hideWeekends ? 5 : 7
           this.view.startDate = this.hideWeekends && this.startWeekOnSunday ? date.addDays(1) : date
           this.view.startDate.setHours(0, 0, 0)
           this.view.endDate = date.addDays(weekDaysCount)
           this.view.endDate.setSeconds(-1) // End at 23:59:59.
           break
-        case 'day':
+        }
+        case 'day': {
           this.view.startDate = date
           this.view.startDate.setHours(0, 0, 0)
           this.view.endDate = new Date(date)
           this.view.endDate.setHours(23, 59, 59) // End at 23:59:59.
           break
+        }
       }
 
       this.addEventsToView()
@@ -469,7 +475,7 @@ export default {
               // If we don't display the event on month view (eventsOnMonthView = false),
               // then don't create segments.
               const createSegments = e.daysCount > 1 && !(id === 'month' && !this.eventsOnMonthView)
-              return createSegments ? createEventSegments(e, firstCellDate || startDate, lastCellDate || endDate, this) : e
+              return createSegments ? createEventSegments(e, firstCellDate || startDate, lastCellDate || endDate) : e
             })
         )
 
@@ -528,20 +534,26 @@ export default {
 
       e.preventDefault()
       const event = this.view.events.find(e => e._eid === resizeAnEvent._eid) || { segments: {} }
+      const { minutes, cursorCoords } = this.minutesAtCursor(e)
       const segment = event.segments && event.segments[resizeAnEvent.segment]
-      const { startTimeMinutes, cursorCoords } = this.minutesAtCursor(e)
 
       // Don't allow time above 24 hours.
-      resizeAnEvent.endTimeMinutes = Math.min(startTimeMinutes, 24 * 60)
+      event.endTimeMinutes = resizeAnEvent.endTimeMinutes = Math.min(minutes, minutesInADay)
+      // Prevent reducing event duration to less than 1 min so it does not disappear.
+      event.endTimeMinutes = resizeAnEvent.endTimeMinutes = Math.max(event.endTimeMinutes, this.timeFrom + 1, (segment || event).startTimeMinutes + 1)
 
-      if (segment) segment.endTimeMinutes = resizeAnEvent.endTimeMinutes
-      event.endTimeMinutes = resizeAnEvent.endTimeMinutes
-      event.end = event.end.substr(0, 11) + formatTime(event.endTimeMinutes)
-      event.endDate = stringToDate(event.end)
-      event.daysCount = countDays(event.startDate, event.endDate)
+      if (segment) segment.endTimeMinutes = event.endTimeMinutes
+
+      event.endDate.setHours(
+        0,
+        event.endTimeMinutes,
+        event.endTimeMinutes === minutesInADay ? -1 : 0 // Remove 1 second if time is 24:00.
+      )
+      event.end = formatDateLite(event.endDate) + ' ' + formatTime(event.endTimeMinutes)
 
       // Resize events horizontally if resize-x is enabled (add/remove segments).
       if (this.resizeX && this.view.id === 'week') {
+        event.daysCount = countDays(event.startDate, event.endDate)
         const cells = this.$refs.cells
         const cellWidth = cells.offsetWidth / cells.childElementCount
         const endCell = Math.floor(cursorCoords.x / cellWidth)
@@ -558,8 +570,8 @@ export default {
           if (newDaysCount !== event.daysCount) {
             // Check that all segments are up to date.
             let lastSegmentFormattedDate = null
-            if (newDaysCount > event.daysCount) lastSegmentFormattedDate = addEventSegment(event, this)
-            else lastSegmentFormattedDate = removeEventSegment(event, this)
+            if (newDaysCount > event.daysCount) lastSegmentFormattedDate = addEventSegment(event)
+            else lastSegmentFormattedDate = removeEventSegment(event)
             resizeAnEvent.segment = lastSegmentFormattedDate
             event.endTimeMinutes += 0.001 // Force updating the current event.
           }
@@ -692,8 +704,8 @@ export default {
       // Populate missing keys: start, startDate, startTimeMinutes, end, endDate, endTimeMinutes, daysCount.
       // Lots of these variables may look redundant but are here for performance as a cached result of calculation. :)
       this.events.forEach(event => {
-        // Event Start, accepts formatted string - startDate accepts Date object.
-        let start, startDate, startDateF, startTime, hoursStart, minutesStart
+        // `event.start` accepts a formatted string - `event.startDate` accepts a Date object.
+        let startDate, startDateF, startTime, hoursStart, minutesStart
         if (event.start) {
           // eslint-disable-next-line
           !([startDateF, startTime = ''] = event.start.split(' '))
@@ -702,16 +714,16 @@ export default {
           startDate = stringToDate(event.start)
         }
         else if (event.startDate && event.startDate instanceof Date) {
-          startDateF = this.formatDate(event.startDate)
+          startDateF = formatDateLite(event.startDate)
           hoursStart = event.startDate.getHours()
           minutesStart = event.startDate.getMinutes()
           startDate = event.startDate
         }
         const startTimeMinutes = parseInt(hoursStart) * 60 + parseInt(minutesStart)
-        start = event.start || startDateF + ' ' + formatTime(startTimeMinutes)
+        const start = event.start || startDateF + ' ' + formatTime(startTimeMinutes)
 
-        // Event End, accepts formatted string - endDate accepts Date object.
-        let end, endDate, endDateF, endTime, hoursEnd, minutesEnd
+        // `event.end` accepts a formatted string - `event.endDate` accepts a Date object.
+        let endDate, endDateF, endTime, hoursEnd, minutesEnd
         if (event.end) {
           // eslint-disable-next-line
           !([endDateF, endTime = ''] = event.end.split(' '))
@@ -720,20 +732,21 @@ export default {
           endDate = stringToDate(event.end)
         }
         else if (event.endDate && event.endDate instanceof Date) {
-          endDateF = this.formatDate(event.endDate)
+          endDateF = formatDateLite(event.endDate)
           hoursEnd = event.endDate.getHours()
           minutesEnd = event.endDate.getMinutes()
           endDate = event.endDate
         }
 
-        // Correct the common practice to end at 00:00 or 24:00 to count a full day.
-        if (['00:00', '24:00'].includes(endTime)) {
-          endDate.setSeconds(-1) // End at 23:59:59.
-          endDateF = this.formatDate(endDate)
-        }
+        let endTimeMinutes = parseInt(hoursEnd) * 60 + parseInt(minutesEnd)
+        const end = event.end || endDateF + ' ' + formatTime(endTimeMinutes)
 
-        const endTimeMinutes = parseInt(hoursEnd) * 60 + parseInt(minutesEnd)
-        end = event.end || endDateF + ' ' + formatTime(endTimeMinutes)
+        // Correct the common practice to end at 00:00 or 24:00 to count a full day.
+        if (!endTimeMinutes || endTimeMinutes === minutesInADay) {
+          endDate.setSeconds(-1) // End at 23:59:59.
+          endDateF = formatDateLite(endDate)
+          endTimeMinutes = minutesInADay
+        }
 
         const multipleDays = startDateF !== endDateF
 
@@ -773,19 +786,19 @@ export default {
      * Get the number of minutes from the top to the mouse cursor.
      *
      * @param {Object} e the native DOM event object.
-     * @return {Object} containing { startTimeMinutes: {Number}, cursorCoords: { x: {Number}, y: {Number} } }
+     * @return {Object} containing { minutes: {Number}, cursorCoords: { x: {Number}, y: {Number} } }
      */
     minutesAtCursor (e) {
-      let startTimeMinutes = 0
+      let minutes = 0
       let cursorCoords = {}
 
-      if (typeof e === 'number') startTimeMinutes = e
+      if (typeof e === 'number') minutes = e
       else if (typeof e === 'object') {
         cursorCoords = this.getPosition(e)
-        startTimeMinutes = Math.round(cursorCoords.y * this.timeStep / parseInt(this.timeCellHeight) + this.timeFrom)
+        minutes = Math.round(cursorCoords.y * this.timeStep / parseInt(this.timeCellHeight) + this.timeFrom)
       }
 
-      return { startTimeMinutes, cursorCoords }
+      return { minutes, cursorCoords }
     },
 
     /**
@@ -841,6 +854,7 @@ export default {
      */
     updateSelectedDate (date) {
       if (date && typeof date === 'string') date = stringToDate(date)
+      else date = new Date(date) // Clone to keep original untouched.
 
       if (date && date instanceof Date) {
         const { selectedDate } = this.view
@@ -1056,16 +1070,19 @@ export default {
       const month = date.getMonth()
 
       switch (this.view.id) {
-        case 'years':
+        case 'years': {
           title = this.texts.years
           break
-        case 'year':
+        }
+        case 'year': {
           title = year
           break
-        case 'month':
+        }
+        case 'month': {
           title = `${this.months[month].label} ${year}`
           break
-        case 'week':
+        }
+        case 'week': {
           const lastDayOfWeek = date.addDays(6)
           let formattedMonthYear = this.formatDate(date, this.xsmall ? 'mmm yyyy' : 'mmmm yyyy')
 
@@ -1077,9 +1094,11 @@ export default {
           }
           title = `${this.texts.week} ${date.getWeek()} (${formattedMonthYear})`
           break
-        case 'day':
+        }
+        case 'day': {
           title = this.formatDate(date, this.texts.dateFormat)
           break
+        }
       }
 
       return title
@@ -1097,7 +1116,7 @@ export default {
       const now = this.now
 
       switch (this.view.id) {
-        case 'years':
+        case 'years': {
           fromYear = this.view.startDate.getFullYear()
           cells = Array.apply(null, Array(25)).map((cell, i) => {
             const startDate = new Date(fromYear + i, 0, 1)
@@ -1106,14 +1125,15 @@ export default {
 
             return {
               startDate,
-              formattedDate: this.formatDate(startDate),
+              formattedDate: formatDateLite(startDate),
               endDate,
               content: fromYear + i,
               current: fromYear + i === now.getFullYear()
             }
           })
           break
-        case 'year':
+        }
+        case 'year': {
           fromYear = this.view.startDate.getFullYear()
           cells = Array.apply(null, Array(12)).map((cell, i) => {
             const startDate = new Date(fromYear, i, 1)
@@ -1122,14 +1142,15 @@ export default {
 
             return {
               startDate,
-              formattedDate: this.formatDate(startDate),
+              formattedDate: formatDateLite(startDate),
               endDate,
               content: this.xsmall ? this.months[i].label.substr(0, 3) : this.months[i].label,
               current: i === now.getMonth() && fromYear === now.getFullYear()
             }
           })
           break
-        case 'month':
+        }
+        case 'month': {
           const month = this.view.startDate.getMonth()
           const firstCellDate = new Date(this.view.firstCellDate)
           todayFound = false
@@ -1144,7 +1165,7 @@ export default {
 
             return {
               startDate,
-              formattedDate: this.formatDate(startDate),
+              formattedDate: formatDateLite(startDate),
               endDate,
               content: startDate.getDate(),
               today: isToday,
@@ -1162,7 +1183,8 @@ export default {
             })
           }
           break
-        case 'week':
+        }
+        case 'week': {
           todayFound = false
           const firstDayOfWeek = this.view.startDate
           const weekDays = this.weekDays
@@ -1174,25 +1196,27 @@ export default {
 
             return {
               startDate,
-              formattedDate: this.formatDate(startDate),
+              formattedDate: formatDateLite(startDate),
               endDate,
               // To increase performance skip checking isToday if today already found.
               today: !todayFound && isDateToday(startDate) && !todayFound++
             }
           }).filter((cell, i) => !weekDays[i].hide)
           break
-        case 'day':
+        }
+        case 'day': {
           const startDate = this.view.startDate
           const endDate = new Date(this.view.startDate)
           endDate.setHours(23, 59, 59) // End at 23:59:59.
 
           cells = [{
             startDate,
-            formattedDate: this.formatDate(startDate),
+            formattedDate: formatDateLite(startDate),
             endDate,
             today: isDateToday(startDate)
           }]
           break
+        }
       }
       return cells
     },
