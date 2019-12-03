@@ -112,12 +112,18 @@ export const formatDateLite = date => {
   return `${date.getFullYear()}-${m < 10 ? '0' : ''}${m}-${d < 10 ? '0' : ''}${d}`
 }
 
-export const stringToDate = string => {
-  if (string instanceof Date) return string
-  // Old code - less performant?
-  // const [, y, m, d, h = 0, min = 0] = string.match(/(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/)
+/**
+ * Converts a string to a Javascript Date object. If a Date object is passed, return it as is.
+ *
+ * @param {String | Date} date the string to convert to Date.
+ * @return {Date} the equivalent Javascript Date object.
+ */
+export const stringToDate = date => {
+  if (date instanceof Date) return date
+  // Old code - less performant.
+  // const [, y, m, d, h = 0, min = 0] = date.match(/(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/)
   // return new Date(y, parseInt(m) - 1, d, h, min)
-  return new Date(string.replace(/-/g, '/')) // replace '-' with '/' for Safari.
+  return new Date(date.replace(/-/g, '/')) // replace '-' with '/' for Safari.
 }
 
 /**
