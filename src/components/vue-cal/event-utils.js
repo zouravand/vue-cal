@@ -198,18 +198,20 @@ export const removeEventSegment = e => {
  * @param {Object} vuecal the vuecal main component, to access needed methods, props, etc.
  */
 export const createEventSegments = (e, viewStartDate, viewEndDate) => {
+  console.log('in createEventSegments. segments:', e.segments, e.occurrences, formatDateLite(viewStartDate), formatDateLite(viewEndDate))
+  // debugger
   const viewStartTimestamp = viewStartDate.getTime()
   const viewEndTimestamp = viewEndDate.getTime()
   let eventStart = e.startDate.getTime()
   let eventEnd = e.endDate.getTime()
   let repeatedEventStartFound = false
-  let timestamp, end
+  let timestamp, end, eventStartAtMidnight
 
   // @todo: I don't think we still need that:
   // Removing 1 sec when ending at 00:00, so that we don't create a segment for nothing on last day.
   if (!e.endDate.getHours() && !e.endDate.getMinutes()) eventEnd -= 1000
 
-  Vue.set(e, 'segments', {})
+  if (!e.segments) Vue.set(e, 'segments', {})
 
   // Case of repeated multiple-day event, not on original dates but on later repetition.
   // If a repetition of multiple-day event is in this function, it means it has already been
@@ -244,23 +246,29 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
     if (isRepetition) {
       let tmpDate = new Date(timestamp)
       let tmpDateFormatted = formatDateLite(tmpDate)
-      // If the current day in loop is a known date of the repeated event (in `e.repeat.dates`),
+      // If the current day in loop is a known date of the repeated event (in `e.occurrences`),
       // then we found the first day of the event repetition, now update the `eventStart` and
       // the end of the loop at current day + event days count.
-      if (repeatedEventStartFound || e.repeat.dates[tmpDateFormatted]) {
+      if (repeatedEventStartFound || e.occurrences[tmpDateFormatted]) {
         if (!repeatedEventStartFound) {
-          eventStart = timestamp
-          eventEnd = end = tmpDate.addDays(e.daysCount - 1).setHours(0, e.endTimeMinutes, 0)
+          eventStart = e.occurrences[tmpDateFormatted].start
+          eventStartAtMidnight = new Date(eventStart).setHours(0, 0, 0)
+          // eventEnd = end = tmpDate.addDays(e.daysCount - 1).setHours(0, e.endTimeMinutes, 0)
+          // Don't update the `end` as we don't want to end the loop, we might have more occurrences of the same event in the next days.
+          eventEnd = /* end = */ e.occurrences[tmpDateFormatted].end
         }
         repeatedEventStartFound = true
         createSegment = true
         // console.log('Found event repetition start:', tmpDateFormatted, 'end on', formatDateLite(new Date(end)))
       }
 
-      isFirstDay = timestamp === eventStart
-      isLastDay = end === eventEnd && nextMidnight > end
-      startDate = isFirstDay ? new Date(new Date(eventStart).setHours(0, e.startTimeMinutes, 0)) : new Date(timestamp)
+      isFirstDay = timestamp === eventStartAtMidnight
+      isLastDay = tmpDateFormatted === formatDateLite(new Date(eventEnd))
+      startDate = isFirstDay ? new Date(eventStart) : new Date(timestamp)
       formattedDate = formatDateLite(startDate)
+      // We want to find any potential other repetition of event in same range.
+      if (isLastDay) repeatedEventStartFound = false
+      // debugger
     }
     else {
       createSegment = true
@@ -287,10 +295,9 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
   }
 
   // Reset found dates after use to free up memory.
-  if (e.repeat) {
-    e.repeat.dates = []
-    delete e.repeat.inView
-  }
+  if (e.occurrences) delete e.occurrences
+
+  console.log('created segments: ', {...e.segments})
 
   return e
 }
@@ -460,19 +467,25 @@ export const eventInRange = (event, start, end) => {
  * @return {Boolean} true if in range, even partially.
  */
 export const recurringEventInRange = (event, start, end) => {
-  console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
+  console.log('in recurringEventInRange')
+  // console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
   // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
-  // Shortcut for repeated multiple-day events.
-  if (event.repeat && event.repeat.inView) {
-    const startTimestamp = event.repeat.inView.start
-    const endTimestamp = event.repeat.inView.end
-    console.log(startTimestamp < end.getTime(), endTimestamp > start.getTime(), endTimestamp)
-    // debugger
-    if (startTimestamp < end.getTime() && endTimestamp > start.getTime()) return true
+
+  // Shortcut for repeated multiple-day events. `occurrences` is the number of times the same event is in view.
+  // `occurrences` gets deleted in `createEventSegments`.
+  if (event.occurrences) {
+    let inView = 0
+    console.log(event.occurrences)
+    Object.values(event.occurrences).forEach(occurrence => {
+      const { start: startTimestamp, end: endTimestamp } = occurrence
+      // console.log(occurrence, startTimestamp < end.getTime(), endTimestamp > start.getTime())
+      if (startTimestamp < end.getTime() && endTimestamp > start.getTime()) inView++
+    })
+    if (inView) return true
   }
 
-  const endTimestamp = Math.min(end.getTime(), event.repeat.until ? (new Date(event.repeat.until)).getTime() : Infinity)
+  const endTimestamp = Math.min(end.getTime(), event.repeat.until ? stringToDate(event.repeat.until).getTime() : Infinity)
   const eventMonthDate = event.startDate.getDate()
   const eventMonth = event.startDate.getMonth()
   let repeatXDays = !isNaN(event.repeat.every)
@@ -496,23 +509,25 @@ export const recurringEventInRange = (event, start, end) => {
     const repeatYear = event.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
 
     if (event.title === 'Nightclub') {
-      console.log(`${tmpDate.toLocaleDateString()}: ${event.title} in range=`, repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear)
+      // console.log(`${tmpDate.toLocaleDateString()}: ${event.title} in range=`, repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear)
     }
     if (repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear) {
       // If multiple-day event, we will have to create segments (in `createEventSegments`)
       // based on the exact same rules, so once it's in the view then keep the result in an
       // array for fast comparison.
       if (event.daysCount > 1) {
-        if (!event.repeat.dates) event.repeat.dates = {}
-        event.repeat.dates[formatDateLite(tmpDate)] = true
-        event.repeat.inView = {
+        if (!event.occurrences) event.occurrences = {}
+        event.occurrences[formatDateLite(tmpDate)] = {
           start: new Date(tmpDateTimestamp).setHours(0, event.startTimeMinutes, 0),
           end: new Date(tmpDateTimestamp).addDays(event.daysCount - 1).setHours(0, event.endTimeMinutes, 0)
         }
+        // Don't return true straight away, check if other occurrences in the same view (to fill up the array of occurences).
       }
-      return true
+      else return true
     }
     tmpDate = tmpDate.addDays(1)
     tmpDateTimestamp = tmpDate.getTime()
   }
+
+  return event.occurrences ? !!Object.keys(event.occurrences).length : false
 }

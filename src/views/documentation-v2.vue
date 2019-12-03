@@ -1244,18 +1244,22 @@
     a#ex--recurring-events(name="ex--recurring-events")
   p You can repeat an event:
   ul
-    li On certain week days - by providing a #[span.code weekdays] array containing the weekdays numbers (1 to 7 for Sunday).
+    li Every day - by providing a #[span.code every: "day"] property.
     li Every week - by providing a #[span.code every: "week"] property.
     li Every month - by providing a #[span.code every: "month"] property.
     li Every year - by providing a #[span.code every: "year"] property.
-    li Forever; Or until an expiry date - by providing an #[span.code until: {String}] property.
+    li Every specific week days - by providing a #[span.code weekdays] array containing the weekdays numbers (1 to 7 for Sunday).
+    li Every `x` days - by providing a #[span.code every: x] property, with #[span.code x] being an integer.
+    li Forever; Or until an expiry date if you provide an #[span.code until: {String | Date}] property.
+    li Whether it's single-day, multiple-day, background, all-day, with time or timeless.
+    //- @todo: check all the above points one by one.
+    //- @todo: check years/year views event counts.
+    //- @todo: check month view with show events.
+    //- @todo: repeated multiple-day events does not appear if the first day is not in view (e.g. hide weekend).
   p.
     Recurrring events work like a set of single day events linked together.#[br]
     That means, deleting, resizing or editing one of the day will apply to all the other days.#[br]
     Try to resize, rename and delete the events.#[br]
-  //- @todo: every x day.
-  //- @todo: repeat multiple day events.
-  //- @todo: check years/year views event counts.
   v-card.my-2.ma-auto.main-content
     vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
       selected-date="2018-11-19"
@@ -3429,7 +3433,20 @@ export default {
       }
     ],
     recurringEvents: [
-      // @todo: repeated multiple-day events.
+      // @todo: repeat a single day background event the whole week. E.g. lunch.
+      // {
+      //   start: '2018-11-19 12:00',
+      //   end: '2018-11-19 14:00',
+      //   title: 'Lunch',
+      //   content: '<i class="v-icon material-icons">local_drink</i>',
+      //   class: 'lunch',
+      //   background: true,
+      //   repeat: {
+      //     every: 'day',
+      //     // weekdays: [1, 2, 3, 4, 5],
+      //     until: '2020-11-30'
+      //   }
+      // },
       {
         start: '2018-11-19 22:00',
         end: '2018-11-20 09:00',
@@ -3437,9 +3454,13 @@ export default {
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
         repeat: {
-          every: 'week',
-          // weekdays: [1],
-          until: '2019-11-30'
+          // every: 'week', // OK.
+          // every: 'month', // OK.
+          // every: 'year', // OK.
+          // every: 10, // OK.
+          // weekdays: [4], // OK.
+          // weekdays: [2, 4],
+          until: '2020-11-30'
         }
       },
       // All bellow are ok.
@@ -3465,17 +3486,17 @@ export default {
       //     until: '2018-11-28' // Don't need a time here as it will take the same as original event date.
       //   }
       // },
-      // {
-      //   start: '2018-11-22 10:00',
-      //   end: '2018-11-22 12:00',
-      //   title: 'Piano lesson',
-      //   content: '<i class="v-icon material-icons">queue_music</i>',
-      //   class: 'leisure',
-      //   repeat: {
-      //     weekdays: [3, 4],
-      //     until: '2018-12-26'
-      //   }
-      // },
+      {
+        start: '2018-11-22 10:00',
+        end: '2018-11-22 12:00',
+        title: 'Piano lesson',
+        content: '<i class="v-icon material-icons">queue_music</i>',
+        class: 'leisure',
+        repeat: {
+          weekdays: [3, 4],
+          until: '2018-12-26'
+        }
+      },
       // {
       //   start: '2018-11-01',
       //   end: '2018-11-01',
