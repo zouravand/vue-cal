@@ -236,7 +236,7 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
     const nextMidnight = (new Date(timestamp).addDays(1)).setHours(0, 0, 0)
     let isFirstDay, isLastDay, startDate, formattedDate
 
-    if (isRepetition) {
+    if (e.repeat) {
       let tmpDate = new Date(timestamp)
       let tmpDateFormatted = formatDateLite(tmpDate)
       // If the current day in loop is a known date of the repeated event (in `e.occurrences`),

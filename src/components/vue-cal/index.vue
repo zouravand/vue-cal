@@ -470,12 +470,13 @@ export default {
 
       if (['month', 'week', 'day'].includes(id) && events) {
         this.view.events.push(
-          ...events.map(e => {
+          ...events
+            .filter(e => {
               // If there are any event occurrences - case of reccurring events - delete them as we change view.
               delete e.occurrences
-              return e
+
+              return eventInRange(e, startDate, endDate)
             })
-            .filter(e => eventInRange(e, startDate, endDate))
             // For each multiple-day event and only if needed, create its segments (= days) for rendering in the view.
             .map(e => {
               // If there are any event occurrences - case of reccurring events - delete them as we change view.
