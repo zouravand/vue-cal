@@ -462,48 +462,53 @@ export default {
      * @param {Array} events
      */
     addEventsToView (events = []) {
+      const { id, startDate, endDate, firstCellDate, lastCellDate } = this.view
+      // Clear the current view if not explicitely giving an array of events to add.
+      if (!events.length) this.view.events = []
+      // @todo: remove the code that explicitely updates this.mutableEvents (e.g on event resize).
+      // as we are already mutating the event from mutableEvents.
+      events = events.length ? events : [...this.mutableEvents]
+
+      // In no event or if on years/year view and eventsCountOnYearView is false
+      // then don't add events to view.
+      if (!events || (['years', 'year'].includes(id) && !this.eventsCountOnYearView)) return
+
       console.log('adding events to view')
 
-      const { id, startDate, endDate, firstCellDate, lastCellDate } = this.view
-      if (!events.length) this.view.events = []
-      events = events.length ? events : this.mutableEvents
+      // First remove the events that are not in view and clear occurrences if any (recurring events).
+      events = events.filter(e => {
+        // If there are any event occurrences - case of reccurring events - delete them as we change view.
+        delete e.occurrences
+        return eventInRange(e, startDate, endDate)
+      })
 
-      if (['month', 'week', 'day'].includes(id) && events) {
-        this.view.events.push(
-          ...events
-            .filter(e => {
-              // If there are any event occurrences - case of reccurring events - delete them as we change view.
-              delete e.occurrences
-
-              return eventInRange(e, startDate, endDate)
-            })
-            // For each multiple-day event and only if needed, create its segments (= days) for rendering in the view.
-            .map(e => {
-              // If there are any event occurrences - case of reccurring events - delete them as we change view.
-              // delete e.occurrences
-
-              // If we don't display the event on month view (eventsOnMonthView = false),
-              // then don't create segments.
-              const createSegments = e.daysCount > 1 && !(id === 'month' && !this.eventsOnMonthView)
-              return createSegments ? createEventSegments(e, firstCellDate || startDate, lastCellDate || endDate) : e
-            })
-        )
-
-        if (id === 'month') {
-          // Save out of scope events into the view object separated from the array of in-scope events.
-          this.view.outOfScopeEvents = []
-          events.forEach(e => {
-            if (eventInRange(e, firstCellDate, startDate) || eventInRange(e, endDate, lastCellDate)) {
-              // Only add events to the view.outOfScopeEvents array if not already in view.events
-              // (multiple-day events case).
-              if (!this.view.events.some(e2 => e2._eid === e._eid)) this.view.outOfScopeEvents.push(e)
-            }
-          })
-        }
+      // For each multiple-day event and only if needed, create its segments (= days) for rendering in the view.
+      // If we don't display the event on month view (eventsOnMonthView = false) then don't create segments.
+      if (['month', 'week', 'day'].includes(id) && !(id === 'month' && !this.eventsOnMonthView)) {
+        events = events.map(e => {
+          return e.daysCount > 1 ? createEventSegments(e, firstCellDate || startDate, lastCellDate || endDate) : e
+        })
       }
 
-      else if (['years', 'year'].includes(id) && events && this.eventsCountOnYearView) {
-        this.view.events.push(...events.filter(e => eventInRange(e, startDate, endDate)))
+      this.view.events.push(...events)
+
+      if (id === 'month') {
+        // Save out of scope events into the view object separated from the array of in-scope events.
+        this.view.outOfScopeEvents = []
+        events.forEach(e => {
+          if (eventInRange(e, firstCellDate, startDate) || eventInRange(e, endDate, lastCellDate)) {
+            // Only add events to the view.outOfScopeEvents array if not already in view.events
+            // (multiple-day events case).
+            if (!this.view.events.some(e2 => e2._eid === e._eid)) this.view.outOfScopeEvents.push(e)
+          }
+        })
+      }
+
+      // @todo: if years view, don't create all the occurrences, just calculate the number.
+      if (['years', 'year'].includes(id)) {
+        events.forEach(e => {
+          if (e.repeat) countOccurrences(e, startDate, endDate)
+        })
       }
     },
 
