@@ -453,7 +453,7 @@ export const eventInRange = (event, start, end) => {
  * @return {Boolean} true if in range, even partially.
  */
 export const recurringEventInRange = (event, start, end) => {
-  // console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
+  console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
   // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
 
@@ -493,9 +493,6 @@ export const recurringEventInRange = (event, start, end) => {
     const repeatMonth = event.repeat.every === 'month' && eventMonthDate === tmpDate.getDate()
     const repeatYear = event.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
 
-    if (event.title === 'Nightclub') {
-      // console.log(`${tmpDate.toLocaleDateString()}: ${event.title} in range=`, repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear)
-    }
     if (repeatWeekdays || repeatXDays || repeatWeek || repeatMonth || repeatYear) {
       // If multiple-day event, we will have to create segments (in `createEventSegments`)
       // based on the exact same rules, so once it's in the view then keep the result in an

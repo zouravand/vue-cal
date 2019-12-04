@@ -1252,6 +1252,7 @@
     li Every `x` days - by providing a #[span.code every: x] property, with #[span.code x] being an integer.
     li Forever; Or until an expiry date if you provide an #[span.code until: {String | Date}] property.
     li Whether it's single-day, multiple-day, background, all-day, with time or timeless.
+    //- month view event count => OK.
     //- @todo: check years/year views event counts.
     //- @todo: repeated multiple-day events does not appear if the first day is not in view (e.g. hide weekend).
     //- @todo: on month view with show events, occurrences don't appear on out of scope days.
