@@ -198,8 +198,6 @@ export const removeEventSegment = e => {
  * @param {Object} vuecal the vuecal main component, to access needed methods, props, etc.
  */
 export const createEventSegments = (e, viewStartDate, viewEndDate) => {
-  console.log('in createEventSegments. segments:', e.segments, e.occurrences, formatDateLite(viewStartDate), formatDateLite(viewEndDate))
-  // debugger
   const viewStartTimestamp = viewStartDate.getTime()
   const viewEndTimestamp = viewEndDate.getTime()
   let eventStart = e.startDate.getTime()
@@ -211,15 +209,10 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
   // Removing 1 sec when ending at 00:00, so that we don't create a segment for nothing on last day.
   if (!e.endDate.getHours() && !e.endDate.getMinutes()) eventEnd -= 1000
 
-  if (!e.segments) Vue.set(e, 'segments', {})
-
-  // Case of repeated multiple-day event, not on original dates but on later repetition.
-  // If a repetition of multiple-day event is in this function, it means it has already been
-  // filtered as matching the selected date range now we only need to create segments for display.
-  const isRepetition = e.repeat && eventEnd <= viewStartTimestamp
+  Vue.set(e, 'segments', {})
 
   // The goal is to create 1 segment per day in the event, but only within the current view.
-  if (!isRepetition) { // Simple case first.
+  if (!e.repeat) { // Simple case first.
     timestamp = Math.max(viewStartTimestamp, eventStart)
     end = Math.min(viewEndTimestamp, eventEnd)
   }
@@ -249,17 +242,14 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
       // If the current day in loop is a known date of the repeated event (in `e.occurrences`),
       // then we found the first day of the event repetition, now update the `eventStart` and
       // the end of the loop at current day + event days count.
-      if (repeatedEventStartFound || e.occurrences[tmpDateFormatted]) {
+      if (repeatedEventStartFound || (e.occurrences && e.occurrences[tmpDateFormatted])) {
         if (!repeatedEventStartFound) {
           eventStart = e.occurrences[tmpDateFormatted].start
           eventStartAtMidnight = new Date(eventStart).setHours(0, 0, 0)
-          // eventEnd = end = tmpDate.addDays(e.daysCount - 1).setHours(0, e.endTimeMinutes, 0)
-          // Don't update the `end` as we don't want to end the loop, we might have more occurrences of the same event in the next days.
-          eventEnd = /* end = */ e.occurrences[tmpDateFormatted].end
+          eventEnd = e.occurrences[tmpDateFormatted].end
         }
         repeatedEventStartFound = true
         createSegment = true
-        // console.log('Found event repetition start:', tmpDateFormatted, 'end on', formatDateLite(new Date(end)))
       }
 
       isFirstDay = timestamp === eventStartAtMidnight
@@ -268,7 +258,6 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
       formattedDate = formatDateLite(startDate)
       // We want to find any potential other repetition of event in same range.
       if (isLastDay) repeatedEventStartFound = false
-      // debugger
     }
     else {
       createSegment = true
@@ -293,11 +282,6 @@ export const createEventSegments = (e, viewStartDate, viewEndDate) => {
 
     timestamp = nextMidnight
   }
-
-  // Reset found dates after use to free up memory.
-  if (e.occurrences) delete e.occurrences
-
-  console.log('created segments: ', {...e.segments})
 
   return e
 }
@@ -449,11 +433,13 @@ export const eventInRange = (event, start, end) => {
     return inRange || (event.repeat && recurringEventInRange(event, new Date(startMidnight), new Date(endMidnight)))
   }
 
+  if (event.repeat) return recurringEventInRange(event, start, end)
+
   const startTimestamp = event.startDate.getTime()
   const endTimestamp = event.endDate.getTime()
   const inRange = startTimestamp < end.getTime() && endTimestamp > start.getTime()
 
-  return inRange || (event.repeat && recurringEventInRange(event, start, end))
+  return inRange
 }
 
 /**
@@ -467,22 +453,21 @@ export const eventInRange = (event, start, end) => {
  * @return {Boolean} true if in range, even partially.
  */
 export const recurringEventInRange = (event, start, end) => {
-  console.log('in recurringEventInRange')
   // console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
   // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
 
-  // Shortcut for repeated multiple-day events. `occurrences` is the number of times the same event is in view.
-  // `occurrences` gets deleted in `createEventSegments`.
+  // For performance, event occurrences are cached until the view is changed (deleted in `addEventsToView`).
+  // `occurrences` is the number of times the same event is in view.
   if (event.occurrences) {
     let inView = 0
-    console.log(event.occurrences)
+    // console.log(event.occurrences)
     Object.values(event.occurrences).forEach(occurrence => {
       const { start: startTimestamp, end: endTimestamp } = occurrence
       // console.log(occurrence, startTimestamp < end.getTime(), endTimestamp > start.getTime())
       if (startTimestamp < end.getTime() && endTimestamp > start.getTime()) inView++
     })
-    if (inView) return true
+    return inView
   }
 
   const endTimestamp = Math.min(end.getTime(), event.repeat.until ? stringToDate(event.repeat.until).getTime() : Infinity)
@@ -515,15 +500,11 @@ export const recurringEventInRange = (event, start, end) => {
       // If multiple-day event, we will have to create segments (in `createEventSegments`)
       // based on the exact same rules, so once it's in the view then keep the result in an
       // array for fast comparison.
-      if (event.daysCount > 1) {
-        if (!event.occurrences) event.occurrences = {}
-        event.occurrences[formatDateLite(tmpDate)] = {
-          start: new Date(tmpDateTimestamp).setHours(0, event.startTimeMinutes, 0),
-          end: new Date(tmpDateTimestamp).addDays(event.daysCount - 1).setHours(0, event.endTimeMinutes, 0)
-        }
-        // Don't return true straight away, check if other occurrences in the same view (to fill up the array of occurences).
+      if (!event.occurrences) event.occurrences = {}
+      event.occurrences[formatDateLite(tmpDate)] = {
+        start: new Date(tmpDateTimestamp).setHours(0, event.startTimeMinutes, 0),
+        end: new Date(tmpDateTimestamp).addDays(event.daysCount - 1).setHours(0, event.endTimeMinutes, 0)
       }
-      else return true
     }
     tmpDate = tmpDate.addDays(1)
     tmpDateTimestamp = tmpDate.getTime()

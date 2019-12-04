@@ -15,6 +15,7 @@
     v-if="vuecal.editableEvents && event.deletable"
     @mousedown.stop="deleteEvent"
     @touchstart.stop="touchDeleteEvent") {{ vuecal.texts.deleteEvent }}
+  p {{event.occurrences}}
   p {{event.segments}}
   slot(name="event-renderer" :event="event" :view="vuecal.view.id")
   //- Force contenteditable="false" for new events without content.

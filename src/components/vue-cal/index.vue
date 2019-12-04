@@ -462,16 +462,25 @@ export default {
      * @param {Array} events
      */
     addEventsToView (events = []) {
+      console.log('adding events to view')
+
       const { id, startDate, endDate, firstCellDate, lastCellDate } = this.view
       if (!events.length) this.view.events = []
       events = events.length ? events : this.mutableEvents
 
       if (['month', 'week', 'day'].includes(id) && events) {
         this.view.events.push(
-          ...events
+          ...events.map(e => {
+              // If there are any event occurrences - case of reccurring events - delete them as we change view.
+              delete e.occurrences
+              return e
+            })
             .filter(e => eventInRange(e, startDate, endDate))
             // For each multiple-day event and only if needed, create its segments (= days) for rendering in the view.
             .map(e => {
+              // If there are any event occurrences - case of reccurring events - delete them as we change view.
+              // delete e.occurrences
+
               // If we don't display the event on month view (eventsOnMonthView = false),
               // then don't create segments.
               const createSegments = e.daysCount > 1 && !(id === 'month' && !this.eventsOnMonthView)

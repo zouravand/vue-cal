@@ -1256,6 +1256,9 @@
     //- @todo: check years/year views event counts.
     //- @todo: check month view with show events.
     //- @todo: repeated multiple-day events does not appear if the first day is not in view (e.g. hide weekend).
+    //- @todo: overlapping does not work.
+    //- @todo: if 2 occurences are in the same day (multiple-day events), only one is shown
+
   p.
     Recurrring events work like a set of single day events linked together.#[br]
     That means, deleting, resizing or editing one of the day will apply to all the other days.#[br]
@@ -3442,14 +3445,14 @@ export default {
       //   class: 'lunch',
       //   background: true,
       //   repeat: {
-      //     every: 'day',
-      //     // weekdays: [1, 2, 3, 4, 5],
+      //     // every: 'day',
+      //     weekdays: [1, 2, 3, 4, 5],
       //     until: '2020-11-30'
       //   }
       // },
       {
         start: '2018-11-19 22:00',
-        end: '2018-11-20 09:00',
+        end: '2018-11-21 11:00',
         title: 'Nightclub',
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
@@ -3458,12 +3461,29 @@ export default {
           // every: 'month', // OK.
           // every: 'year', // OK.
           // every: 10, // OK.
-          // weekdays: [4], // OK.
+          weekdays: [1, 4], // OK.
           // weekdays: [2, 4],
           until: '2020-11-30'
         }
       },
+
       // All bellow are ok.
+      // {
+      //   start: '2018-11-19 22:00',
+      //   end: '2018-11-20 11:00',
+      //   title: 'Nightclub',
+      //   content: '<i class="v-icon material-icons">local_drink</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     // every: 'week', // OK.
+      //     // every: 'month', // OK.
+      //     // every: 'year', // OK.
+      //     // every: 10, // OK.
+      //     weekdays: [1, 3], // OK.
+      //     // weekdays: [2, 4],
+      //     until: '2020-11-30'
+      //   }
+      // },
       // {
       //   start: '2018-11-23', // You can put time or not, will be discarded.
       //   end: '2018-11-23',
@@ -3486,17 +3506,18 @@ export default {
       //     until: '2018-11-28' // Don't need a time here as it will take the same as original event date.
       //   }
       // },
-      {
-        start: '2018-11-22 10:00',
-        end: '2018-11-22 12:00',
-        title: 'Piano lesson',
-        content: '<i class="v-icon material-icons">queue_music</i>',
-        class: 'leisure',
-        repeat: {
-          weekdays: [3, 4],
-          until: '2018-12-26'
-        }
-      },
+      // {
+      //   start: '2018-11-22 10:00',
+      //   end: '2018-11-22 12:00',
+      //   title: 'Piano lesson',
+      //   content: '<i class="v-icon material-icons">queue_music</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     weekdays: [3, 4],
+      //     // every: 1, // OK.
+      //     until: '2018-12-26'
+      //   }
+      // },
       // {
       //   start: '2018-11-01',
       //   end: '2018-11-01',

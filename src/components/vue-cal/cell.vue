@@ -247,8 +247,6 @@ export default {
       }
     },
     events () {
-      console.log('in cell events computed')
-
       const { startDate: cellStart, endDate: cellEnd } = this.data
       let events = []
 
@@ -287,9 +285,7 @@ export default {
             // So they behave as background events if not in allDay slot.
             // @todo: Do we want this or not?
             const eventToUpdate = (event.segments && event.segments[this.data.formattedDate]) || event
-            console.log(this.data.formattedDate, event.segments[this.data.formattedDate])
 
-            // debugger
             if ((event.startTimeMinutes || event.endTimeMinutes) && !event.allDay) updateEventPosition(eventToUpdate, this.$parent)
           })
 
