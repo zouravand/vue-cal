@@ -1252,12 +1252,12 @@
     li Every `x` days - by providing a #[span.code every: x] property, with #[span.code x] being an integer.
     li Forever; Or until an expiry date if you provide an #[span.code until: {String | Date}] property.
     li Whether it's single-day, multiple-day, background, all-day, with time or timeless.
-    //- @todo: check all the above points one by one.
     //- @todo: check years/year views event counts.
-    //- @todo: check month view with show events.
     //- @todo: repeated multiple-day events does not appear if the first day is not in view (e.g. hide weekend).
+    //- @todo: on month view with show events, occurrences don't appear on out of scope days.
     //- @todo: overlapping does not work.
-    //- @todo: if 2 occurences are in the same day (multiple-day events), only one is shown
+    //- @todo: if 2 occurences are in the same day (multiple-day events), only one is shown.
+    //- @todo: check all the above points one by one.
 
   p.
     Recurrring events work like a set of single day events linked together.#[br]
@@ -3452,7 +3452,7 @@ export default {
       // },
       {
         start: '2018-11-19 22:00',
-        end: '2018-11-21 11:00',
+        end: '2018-11-20 11:00',
         title: 'Nightclub',
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
