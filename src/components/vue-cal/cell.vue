@@ -19,7 +19,12 @@
       @mousedown="!isDisabled && onCellMouseDown($event, splits.length ? i + 1 : null)"
       @click="!isDisabled && selectCell($event)"
       @dblclick="!isDisabled && onCellDblClick($event)")
-      slot(name="cell-content" :events="events" :select-cell="$event => selectCell($event, true)" :split="splits.length ? split : false")
+      slot(
+        name="cell-content"
+        :events="events"
+        :total="['years', 'year'].includes(view) ? totalEventsCount : eventsCount"
+        :select-cell="$event => selectCell($event, true)"
+        :split="splits.length ? split : false")
       .vuecal__cell-events(
         v-if="eventsCount && (['week', 'day'].includes(view) || (view === 'month' && options.eventsOnMonthView))")
         event(
@@ -299,11 +304,15 @@ export default {
 
       return events
     },
-    eventsCount: {
-      get () {
-        return this.events.length
-      },
-      set () {}
+    eventsCount () {
+      return this.events.length
+    },
+    // Including all the repeated events occurrences if there are.
+    totalEventsCount () {
+      return this.events.reduce((sum, e) => {
+        const { occurrences = 1 } = e
+        return sum += occurrences && isNaN(occurrences) ? Object.keys(occurrences).length : occurrences
+      }, 0)
     },
     splits () {
       return this.cellSplits.map((item, i) => {

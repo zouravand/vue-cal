@@ -5,6 +5,8 @@ const defaultEventDuration = 2 // In hours.
 // This is an approximation, it will not work with DLS time.
 const approxDayMilliseconds = 24 * 3600 * 1000
 const minutesInADay = 24 * 60 // Don't do the maths every time.
+// This is an approximate minimum we can get in a year. Purposely stay bellow 365 but close.
+const minYearMilliseconds = 364 * approxDayMilliseconds // Don't do the maths every time.
 
 export const eventDefaults = {
   _eid: null,
@@ -458,6 +460,12 @@ export const recurringEventInRange = (event, start, end) => {
   // Event starts after the given range.
   if (end.getTime() <= event.startDate.getTime()) return false
 
+  // When calculating on a whole year or more, just return the occurrences number,
+  // don't loop through every day.
+  if (event.repeat && end.getTime() - start.getTime() >= minYearMilliseconds) {
+    return recurringEventInRangeLite(event, start, end)
+  }
+
   // For performance, event occurrences are cached until the view is changed (deleted in `addEventsToView`).
   // `occurrences` is the number of times the same event is in view.
   if (event.occurrences) {
@@ -509,4 +517,42 @@ export const recurringEventInRange = (event, start, end) => {
   }
 
   return event.occurrences ? !!Object.keys(event.occurrences).length : false
+}
+
+// This function has to be very performant.
+export const recurringEventInRangeLite = (event, start, end) => {
+  const {every, weekdays, until } = event.repeat
+  event.occurrences = 1
+  // debugger
+
+  if (every) {
+    switch (every) {
+      case 'day': {
+        event.occurrences = 365
+        break
+      }
+      case 'week': {
+        event.occurrences = 52
+        break
+      }
+      case 'month': {
+        event.occurrences = 12
+        break
+      }
+      case 'year': {
+        event.occurrences = 1
+        break
+      }
+      default: {
+        // If every is a number.
+        if (!isNaN(every)) event.occurrences = 1000
+        break
+      }
+    }
+  }
+  else if (weekdays) {
+    event.occurrences = weekdays.length * 52
+  }
+
+  return true
 }

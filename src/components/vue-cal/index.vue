@@ -95,12 +95,12 @@
                   :min-timestamp="minTimestamp"
                   :max-timestamp="maxTimestamp"
                   :cell-splits="hasSplits && splitDays || []")
-                  template(v-slot:cell-content="{ events, split, selectCell }")
+                  template(v-slot:cell-content="{ events, split, selectCell, total }")
                     slot(name="cell-content" :cell="cell" :view="view" :go-narrower="selectCell" :events="events")
                       .split-label(v-if="split && !stickySplitLabels" v-html="split.label")
                       .vuecal__cell-date(v-if="cell.content" v-html="cell.content")
                       .vuecal__cell-events-count(v-if="((view.id === 'month' && !eventsOnMonthView) || (['years', 'year'].includes(view.id) && eventsCountOnYearView)) && events.length")
-                        slot(name="events-count" :view="view" :events="events") {{ events.length }}
+                        slot(name="events-count" :view="view" :events="events" :total="total") {{ total }}
                       .vuecal__no-event(v-if="!events.length && ['week', 'day'].includes(view.id)")
                         slot(name="no-event") {{ texts.noEvent }}
                   template(v-slot:event-renderer="{ event, view }")
@@ -501,13 +501,6 @@ export default {
             // (multiple-day events case).
             if (!this.view.events.some(e2 => e2._eid === e._eid)) this.view.outOfScopeEvents.push(e)
           }
-        })
-      }
-
-      // @todo: if years view, don't create all the occurrences, just calculate the number.
-      if (['years', 'year'].includes(id)) {
-        events.forEach(e => {
-          if (e.repeat) countOccurrences(e, startDate, endDate)
         })
       }
     },
