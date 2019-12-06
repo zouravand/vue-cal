@@ -310,7 +310,7 @@ export default {
     // Including all the repeated events occurrences if there are.
     totalEventsCount () {
       return this.events.reduce((sum, e) => {
-        const { occurrences = 1 } = e
+        const { occurrences = 0 } = e
         return sum += occurrences && isNaN(occurrences) ? Object.keys(occurrences).length : occurrences
       }, 0)
     },

@@ -520,15 +520,20 @@ export const recurringEventInRange = (event, start, end) => {
 }
 
 // This function has to be very performant.
+// It calculates event occurences in a full year (`year` view) or in 25 years (`years` view).
 export const recurringEventInRangeLite = (event, start, end) => {
   const {every, weekdays, until } = event.repeat
-  event.occurrences = 1
+  // On `years` view, a cell is a full year, on `year` view a cell is a month.
+  const yearsView = start.getMonth() !== end.getMonth()
+
+  if (until && start.getTime() >= stringToDate(until).getTime()) return false
+  event.occurrences = 0
   // debugger
 
   if (every) {
     switch (every) {
       case 'day': {
-        event.occurrences = 365
+        event.occurrences = yearsView ? (start.isLeapYear() ? 366 : 365) : end.getDate()
         break
       }
       case 'week': {
@@ -537,6 +542,19 @@ export const recurringEventInRangeLite = (event, start, end) => {
       }
       case 'month': {
         event.occurrences = 12
+        // event.occurrences = {}
+        // event.occurrences['2018-01-01'] = 1
+        // event.occurrences['2018-02-01'] = 1
+        // event.occurrences['2018-03-01'] = 1
+        // event.occurrences['2018-04-01'] = 1
+        // event.occurrences['2018-05-01'] = 1
+        // event.occurrences['2018-06-01'] = 1
+        // event.occurrences['2018-07-01'] = 1
+        // event.occurrences['2018-08-01'] = 1
+        // event.occurrences['2018-09-01'] = 1
+        // event.occurrences['2018-10-01'] = 1
+        // event.occurrences['2018-11-01'] = 1
+        // event.occurrences['2018-12-01'] = 1
         break
       }
       case 'year': {
@@ -544,14 +562,15 @@ export const recurringEventInRangeLite = (event, start, end) => {
         break
       }
       default: {
-        // If every is a number.
+        // If `every` is a number.
         if (!isNaN(every)) event.occurrences = 1000
         break
       }
     }
   }
   else if (weekdays) {
-    event.occurrences = weekdays.length * 52
+    event.occurrences = {}
+    event.occurrences['2018-01-01'] = weekdays.length * 52
   }
 
   return true
