@@ -684,8 +684,8 @@
       start: '2018-11-16 10:30',
       end: '2018-11-16 11:30',
       // You can also define event dates with Javascript Date objects:
-      // startDate: new Date('2018-11-16 10:30'),
-      // endDate: new Date('2018-11-16 11:30'),
+      // startDate: new Date(2018, 11 - 1, 16, 10, 30),
+      // endDate: new Date(2018, 11 - 1, 16, 11, 30),
       title: 'Doctor appointment',
       content: '&lt;i class="v-icon material-icons"&gt;local_hospital&lt;/i&gt;',
       class: 'health'
@@ -1240,9 +1240,12 @@
 
   //- Example.
   h4.title
-    a(href="#ex--recurring-events") # Recurring events
+    a(href="#ex--recurring-events")
+      | # Recurring events
+      v-chip.ml-2.white--text(small color="red") Coming soon
     a#ex--recurring-events(name="ex--recurring-events")
-  p You can repeat an event:
+  .mt-4 #[strong When it will be ready, this is how it will work.]
+  .mb-2 You can repeat an event:
   ul
     li Every day - by providing a #[span.code every: "day"] property.
     li Every week - by providing a #[span.code every: "week"] property.
@@ -1252,18 +1255,20 @@
     li Every `x` days - by providing a #[span.code every: x] property, with #[span.code x] being an integer.
     li Forever; Or until an expiry date if you provide an #[span.code until: {String | Date}] property.
     li Whether it's single-day, multiple-day, background, all-day, with time or timeless.
-    //- month view event count => OK.
-    //- @todo: check years/year views event counts.
-    //- @todo: repeated multiple-day events does not appear if the first day is not in view (e.g. hide weekend).
-    //- @todo: on month view with show events, occurrences don't appear on out of scope days.
-    //- @todo: overlapping does not work.
-    //- @todo: if 2 occurences are in the same day (multiple-day events), only one is shown.
-    //- @todo: check all the above points one by one.
+  sshpre(language="js" label="Still to do...").
+    // month view event count => OK.
+    // @todo: check years/year views event counts.
+    // @todo: repeated multiple-day events does not appear if the first day is not in view (e.g. hide weekend).
+    // @todo: on month view with show events, occurrences don't appear on out of scope days.
+    // @todo: overlapping does not work.
+    // @todo: if 2 occurences are in the same day (multiple-day events), only one is shown.
+    // @todo: check all the above points one by one.
 
   p.
     Recurrring events work like a set of single day events linked together.#[br]
-    That means, deleting, resizing or editing one of the day will apply to all the other days.#[br]
-    Try to resize, rename and delete the events.#[br]
+    That means, deleting, resizing or editing one of the day will apply to all the other days.
+  v-card.my-4.ma-auto.py-12.grey.lighten-5.elevation-1
+    .text-center.code Demo coming soon.
   v-card.my-2.ma-auto.main-content
     vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
       selected-date="2018-11-19"
@@ -1278,9 +1283,10 @@
     &lt;vue-cal selected-date="2018-11-19"
              :time-from="8 * 60"
              :time-to="23 * 60"
-             :disable-views="['years', 'year', 'month']"
              hide-weekends
+             events-count-on-year-view
              editable-events
+             show-all-day-events
              :events="events"&gt;
     &lt;/vue-cal&gt;
 
@@ -1288,25 +1294,72 @@
     data: () => ({
       events: [
         {
-          start: '2018-11-16 10:00',
-          end: '2018-11-20 12:37',
-          title: 'Running Marathon',
-          content: '&lt;i class="v-icon material-icons"&gt;directions_run&lt;/i&gt;',
-          class: 'sport'
-        },
-        {
-          start: '2018-11-20 10:00',
-          end: '2018-11-20 10:25',
-          title: 'Drink water!',
+          start: '2018-11-19 22:00',
+          end: '2018-11-20 11:00',
+          title: 'Nightclub',
           content: '&lt;i class="v-icon material-icons"&gt;local_drink&lt;/i&gt;',
-          class: 'health'
+          class: 'leisure',
+          repeat: {
+            weekdays: [1, 3], // You can repeat on multiple days of the week.
+            until: '2020-11-30' // Don't need a time here as it will take the same as original event date.
+          }
         },
         {
-          start: '2018-11-21 19:00',
-          end: '2018-11-23 11:30',
-          title: 'Trip to India',
-          content: '&lt;i class="v-icon material-icons"&gt;flight&lt;/i&gt;',
-          class: 'leisure'
+          start: '2018-11-23', // You can put time or not, will be discarded if all-day.
+          end: '2018-11-23',
+          title: 'Pizza day!',
+          content: '&lt;i class="v-icon material-icons"&gt;local_pizza&lt;/i&gt;',
+          class: 'pink-event',
+          allDay: true,
+          repeat: {
+            weekdays: [5] // If original event day is not in these days, original event will still show up.
+            // With no `until` property, it will go on forever.
+          }
+        },
+        {
+          start: '2018-11-22 10:00',
+          end: '2018-11-22 12:00',
+          title: 'Piano lesson',
+          content: '&lt;i class="v-icon material-icons"&gt;queue_music&lt;/i&gt;',
+          class: 'leisure',
+          repeat: {
+            every: 'week',
+            until: new Date('2019/06/01') // You can also use a Javascript Date.
+          }
+        },
+        {
+          start: '2018-11-20 18:00',
+          end: '2018-11-20 20:00',
+          title: 'Tennis tournament',
+          content: '&lt;i class="v-icon material-icons"&gt;sports_tennis&lt;/i&gt;',
+          class: 'sport',
+          repeat: {
+            every: 14,
+            until: '2019-01-20'
+          }
+        },
+        {
+          start: '2018-11-01',
+          end: '2018-11-01',
+          title: 'Crêpes day',
+          content: '&lt;i class="v-icon material-icons"&gt;queue_music&lt;/i&gt;',
+          class: 'yellow-event',
+          allDay: true,
+          repeat: {
+            every: 'month',
+            until: '2019-12-26'
+          }
+        },
+        {
+          start: '2015-06-15',
+          end: '2015-06-15',
+          title: 'My Birthday',
+          content: '&lt;i class="v-icon material-icons"&gt;cake&lt;/i&gt;<br>I am 4.',
+          class: 'blue-event',
+          allDay: true,
+          repeat: {
+            every: 'year'
+          }
         }
       ]
     })
@@ -1878,27 +1931,17 @@
         p.
           Will return a string with formatted date (and time if given) using the loaded locale.#[br]
           For the formatting syntax, refer to the #[span.code locale] &amp; #[span.code timeFormat]
-          in the [a(href="#api") API section].
+          in the #[a(href="#api") API section].
       li
         code formatTime(time, format = 'HH:mm' | 'h:mm{am}' if `twelve-hour`)
         p.
           Will return a string with formatted time using the loaded locale.#[br]
-          For the formatting syntax, refer to the #[span.code timeFormat] in the [a(href="#api") API section].
+          For the formatting syntax, refer to the #[span.code timeFormat] in the #[a(href="#api") API section].
 
     strong Useful #[span.code Date] prototypes
     p.
-      Vue Cal has no dependency and performs date operations through 3 useful #[span.code Date] functions that have been
-      added to the native #[span.code Date] class through prototype for convenience. (E.g. #[span.code (new Date()).addDays(2)])
-    ul
-      li
-        code.mr-2 addDays(days)
-        | allows you to easily add days directly on the Date object. `days` is an integer.
-      li
-        code.mr-2 subtractDays(days)
-        | allows you to easily subtract days directly on the Date object. `days` is an integer.
-      li
-        code.mr-2 getWeek()
-        | allows you to get the week number of a Date, directly on the Date object.
+      Don't miss out on these convenient functions! Read on in the
+      #[a(href="date-prototypes") #[span.code Date] prototypes section].
 
   //- Example.
   h4.title
@@ -2551,6 +2594,7 @@
         When set to #[span.code true], the weeks numbers will show in the first column on the #[span.code month] view (only).#[br]
         You can also provide a custom renderer to the weeks numbers cells through the #[span.code week-number-cell] slot.
       highlight-message
+        a#there-can-be-53-weeks-in-a-year(name="there-can-be-53-weeks-in-a-year")
         Strong Did you know there can be 53 weeks in the year?#[br]
         | This happens every time the year starts a Thursday, or starts a Wednesday of a leap year. In this case the week number will be 53 instead of 1.
     li
@@ -2799,8 +2843,8 @@
             start: '2018-11-19 12:00', // Required.
             end: '2018-11-19 14:00', // Required.
             // Instead of formatted dates, you can also provide Javascript Date objects:
-            // startDate: new Date('2018-11-16 10:30'),
-            // endDate: new Date('2018-11-16 11:30'),
+            // startDate: new Date(2018, 11 - 1, 19, 12, 0),
+            // endDate: new Date(2018, 11 - 1, 19, 14, 0),
             title: 'String', // Optional.
             content: 'String', // Optional.
             class: 'String', // Optional - space-separated css classes.
@@ -2848,6 +2892,41 @@
           li.mt-2.
             If you want to end an event at #[span.code 00:00], you have to set
             #[span.code 24:00] instead, to keep it to the same day you intended.
+
+  h2.headline.mt-12.pt-12
+    a(href="#date-prototypes") #[strong.code Date] Prototypes
+    a#date-prototypes(name="date-prototypes")
+  p
+    | Vue Cal has no dependency and performs date operations through a few notable useful and efficient functions that
+    | have been added to the native #[span.code Date] class for your convenience.#[br]
+    strong.mr-2 Once Vue Cal is loaded, you can access the following functions just like a simple #[span.code Date] function.
+    | E.g. #[span.code (new Date()).addDays(2)]
+
+  highlight-message.my-4(type="tips") With this set of functions, you will most likely not need #[em Moment.js] or other Date libraries!
+  ul
+    li.mt-3
+      code.mr-2 .addDays(days)
+      | Adds days to a Date object and returns it. The original Date stays untouched as a copy is made.#[br]
+      | `days` is an integer.
+    li.mt-3
+      code.mr-2 .subtractDays(days)
+      | Subtracts days to a Date object and returns it. The original Date stays untouched as a copy is made.#[br]
+      | `days` is an integer.
+    li.mt-3
+      code.mr-2 .getWeek()
+      | Returns the week number (1 #[a(href="#there-can-be-53-weeks-in-a-year") to 53]) of a date.
+    li.mt-3
+      code.mr-2 .isToday()
+      | Returns true if the date is Today.
+    li.mt-3
+      code.mr-2 .isLeapYear()
+      | Allows you to get the week number of a Date, directly on the Date object.
+    li.mt-3
+      code.mr-2 .format(format)
+      | // @todo
+    li.mt-3
+      code.mr-2 .formatTime(format)
+      | // @todo
 
   h2.headline.mt-12.pt-12
     a(href="#css-notes") CSS Notes
@@ -3458,11 +3537,12 @@ export default {
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
         repeat: {
+          every: 'day', // OK.
           // every: 'week', // OK.
           // every: 'month', // OK.
           // every: 'year', // OK.
           // every: 10, // OK.
-          weekdays: [1, 4], // OK.
+          // weekdays: [1, 4], // OK.
           // weekdays: [2, 4],
           until: '2020-11-30'
         }
@@ -3535,7 +3615,7 @@ export default {
       //   start: '2015-06-15',
       //   end: '2015-06-15',
       //   title: 'My Birthday',
-      //   content: '<i class="v-icon material-icons">cake</i>',
+      //   content: '<i class="v-icon material-icons">cake</i><br>I am 4.',
       //   class: 'blue-event',
       //   allDay: true,
       //   repeat: {

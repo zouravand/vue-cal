@@ -21,6 +21,7 @@
           v-list-item(href="#installation" v-scroll-to="'#installation'") Installation
           v-list-item(href="#how-to-use" v-scroll-to="'#how-to-use'") How To Use
           v-list-item(href="#api" v-scroll-to="'#api'") API
+          v-list-item(href="#date-prototypes" v-scroll-to="'#date-prototypes'") #[span.code.mr-2 Date] Prototypes
           v-list-item(href="#css-notes" v-scroll-to="'#css-notes'") CSS Notes
           v-list-item(href="#release-notes" v-scroll-to="'#release-notes'") Release Notes
       v-menu(offset-y open-on-hover left attach transition="slide-y-transition")
@@ -66,7 +67,7 @@
           v-list-item(href="#ex--multiple-day-events" v-scroll-to="'#ex--multiple-day-events'") Multiple day events
           v-list-item(href="#ex--recurring-events" v-scroll-to="'#ex--recurring-events'")
             | Recurring events
-            v-chip.xsmall.ml-2(small color="primary" outlined) new
+            v-chip.xsmall.ml-2(small color="red" outlined) Coming soon
           v-list-item(href="#ex--overlapping-events" v-scroll-to="'#ex--overlapping-events'") Overlapping events
           v-list-item(href="#ex--background-events" v-scroll-to="'#ex--background-events'") Background events
           v-list-item(href="#ex--all-day-events" v-scroll-to="'#ex--all-day-events'") All day events
