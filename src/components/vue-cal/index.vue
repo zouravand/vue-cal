@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import { isDateToday, getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, stringToDate, countDays } from './date-utils'
+import { getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, stringToDate, countDays } from './date-utils'
 import { eventDefaults, createAnEvent, createEventSegments, addEventSegment, removeEventSegment, eventInRange } from './event-utils'
 import Header from './header'
 import WeekdaysHeadings from './weekdays-headings'
@@ -1169,7 +1169,7 @@ export default {
             const endDate = new Date(startDate)
             endDate.setHours(23, 59, 59) // End at 23:59:59.
             // To increase performance skip checking isToday if today already found.
-            const isToday = !todayFound && isDateToday(startDate) && !todayFound++
+            const isToday = !todayFound && startDate.isToday() && !todayFound++
 
             return {
               startDate,
@@ -1207,7 +1207,7 @@ export default {
               formattedDate: formatDateLite(startDate),
               endDate,
               // To increase performance skip checking isToday if today already found.
-              today: !todayFound && isDateToday(startDate) && !todayFound++
+              today: !todayFound && startDate.isToday() && !todayFound++
             }
           }).filter((cell, i) => !weekDays[i].hide)
           break
@@ -1221,7 +1221,7 @@ export default {
             startDate,
             formattedDate: formatDateLite(startDate),
             endDate,
-            today: isDateToday(startDate)
+            today: startDate.isToday()
           }]
           break
         }

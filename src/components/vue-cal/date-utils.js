@@ -1,4 +1,4 @@
-// Cache Today's date (to a maximum) for better isDateToday() performances. Formatted without leading 0.
+// Cache Today's date (to a maximum) for better isToday() performances. Formatted without leading 0.
 // We still need to update Today's date when Today changes without page refresh.
 let now, todayDate, todayF
 const todayFormatted = () => {
@@ -34,8 +34,15 @@ Date.prototype.getWeek = function () {
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
 }
 
-export const isDateToday = date => {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}` === todayFormatted()
+// eslint-disable-next-line
+Date.prototype.isToday = function () {
+  return `${this.getFullYear()}-${this.getMonth()}-${this.getDate()}` === todayFormatted()
+}
+
+// eslint-disable-next-line
+Date.prototype.isLeapYear = function () {
+  const year = this.getFullYear()
+  return !(year % 400) || (year % 100 && !(year % 4));
 }
 
 // Returns today if it's FirstDayOfWeek (Monday or Sunday) or previous FirstDayOfWeek otherwise.
