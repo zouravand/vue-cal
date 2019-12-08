@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import { getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, stringToDate, countDays } from './date-utils'
+import { initDatePrototypes, updateDateTexts, getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, stringToDate, countDays } from './date-utils'
 import { eventDefaults, createAnEvent, createEventSegments, addEventSegment, removeEventSegment, eventInRange } from './event-utils'
 import Header from './header'
 import WeekdaysHeadings from './weekdays-headings'
@@ -277,7 +277,10 @@ export default {
       if (this.locale === 'en') this.texts = Object.assign({}, textsDefaults, require('./i18n/en.json'))
       else {
         import(/* webpackInclude: /\.json$/, webpackChunkName: "i18n/[request]" */ `./i18n/${locale}`)
-          .then(response => (this.texts = Object.assign({}, textsDefaults, response.default)))
+          .then(response => {
+            this.texts = Object.assign({}, textsDefaults, response.default)
+            updateDateTexts(this.texts)
+          })
       }
     },
 
@@ -934,6 +937,8 @@ export default {
 
   created () {
     this.loadLocale(this.locale)
+
+    initDatePrototypes(this.texts)
 
     // Init the array of events, then keep listening for changes in watcher.
     this.updateMutableEvents(this.events)
