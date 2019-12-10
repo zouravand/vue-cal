@@ -2906,8 +2906,12 @@
       just like a simple #[span.code Date] function.
     | E.g. #[span.code (new Date()).addDays(2)]
 
-  highlight-message.my-4(type="tips").
-    With this set of functions, you will most likely not need #[em Moment.js] or any other additional Date library!
+  highlight-message.my-4(type="tips")
+    ul
+      li.
+        Remember the Date functions are added when Vue Cal loads not before. You can always check if you have it before you use it:#[br]
+        #[span.code.black--text Date.prototype.format &amp;&amp; new Date().format()]
+      li With this set of functions, you will most likely not need #[em Moment.js] or any other additional Date library!
   ul
     li.mt-3
       code.mr-2 .addDays(days)
@@ -3924,7 +3928,7 @@ export default {
   },
   computed: {
     nowFormatted () {
-      return new Date().format('yyyy{mm}dd')
+      return Date.prototype.format && (new Date()).format('yyyy{mm}dd')
     },
     currentDateFormatted () {
       const y = this.now.getFullYear()
