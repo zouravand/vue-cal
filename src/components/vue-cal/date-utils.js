@@ -11,9 +11,7 @@ const todayFormatted = () => {
   return todayF
 }
 
-export const initDatePrototypes = function (texts) {
-  Date.prototype.texts = texts
-
+const initDatePrototypes = function () {
   // eslint-disable-next-line
   Date.prototype.addDays = function (days) {
     const date = new Date(this.valueOf())
@@ -58,6 +56,9 @@ export const initDatePrototypes = function (texts) {
     return formatTime(this.getHours() * 60 + this.getMinutes(), format, Date.prototype.texts)
   }
 }
+
+// Add prototypes ASAP.
+if (Date && !Date.prototype.addDays) initDatePrototypes()
 
 export const updateDateTexts = function (texts) {
   Date.prototype.texts = texts
