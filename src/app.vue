@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app(:class="{ ready }" v-scroll="onScroll")
+  v-app(:class="{ ready, [$route.path.replace('/', '')]: true }" v-scroll="onScroll")
     v-container
       component(:is="$route.path.includes('/v1') ? 'top-bar-v1' : 'top-bar-v2'" :offset-top="offsetTop")
       router-view

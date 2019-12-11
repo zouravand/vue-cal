@@ -8,8 +8,7 @@ vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
   events-count-on-year-view
   editable-events
   show-all-day-events
-  :events="recurringEvents"
-  style="min-height: 400px;max-height: 65vh")
+  :events="recurringEvents")
 </template>
 
 <script>
@@ -49,8 +48,8 @@ export default {
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
         repeat: {
-          every: 'day', // OK.
-          // every: 'week', // OK.
+          // every: 'day', // OK.
+          every: 'week', // OK.
           // every: 'month', // OK.
           // every: 'year', // OK.
           // every: 10, // OK.
@@ -154,6 +153,17 @@ export default {
 </script>
 
 <style lang="scss">
-.v-application--wrap {min-height: 0;}
-footer {display: none !important;}
+.test {
+  .v-application--wrap {
+    min-height: 0;
+    padding-top: 8em;
+    margin-top: -6em;
+  }
+  footer {display: none !important;}
+
+  .vuecal {
+    min-height: 400px;
+    max-height: 75vh;
+  }
+}
 </style>
