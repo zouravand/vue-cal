@@ -373,7 +373,7 @@
     E.g. #[span.code vuecal--rounded-theme], #[span.code vuecal--green-theme], #[span.code vuecal--blue-theme].
     Read more about calendar themes in the #[a(href="#css-notes") CSS Notes] section.
 
-  v-layout.ma-auto(row justify-center wrap)
+  v-layout.ma-auto(justify-center wrap)
     v-card.ma-2.main-content(style="width: 270px;height: 300px")
       vue-cal.vuecal--rounded-theme.vuecal--blue-theme(
         xsmall
@@ -434,11 +434,11 @@
     a(href="#ex--internationalization")
       v-icon.mr-2 translate
       | Internationalization (i18n)
-  v-layout(row align-end wrap)
+  v-layout(align-end wrap)
     h4.title.mt-6
       a(href="#ex--internationalization") # Internationalization
     v-spacer
-    v-layout.shrink(row align-center)
+    v-layout.shrink(align-center)
       v-icon.mr-2(color="primary") translate
       span.mr-2 Current language:
       v-select.pa-0.ma-0.shrink(
@@ -815,8 +815,8 @@
       v-radio(label="dash" value="dash" color="primary")
       v-radio(label="dot" value="dot" color="primary")
       v-radio(label="cell background" value="cell" color="primary")
-  v-layout.ma-auto(row justify-center wrap)
-    v-card.ma-2.my-2.ma-auto.main-content(style="width: 300px;height: 360px")
+  v-layout.ma-auto(justify-center wrap)
+    v-card.ma-2.my-2.main-content(style="width: 300px;height: 360px")
       vue-cal.vuecal--green-theme(
         :class="'event-indicator--' + indicatorStyle"
         selected-date="2018-11-19"
@@ -826,7 +826,7 @@
         :disable-views="['day']"
         events-count-on-year-view
         :events="events")
-    v-card.ma-2.my-2.ma-auto.main-content(style="width: 300px;height: 360px")
+    v-card.ma-2.my-2.main-content(style="width: 300px;height: 360px")
       vue-cal.vuecal--yellow-theme(
         :class="'event-indicator--' + indicatorStyle"
         selected-date="2018-11-19"
@@ -976,8 +976,8 @@
         #[a(href="#ex--emitted-events") emitted events example]),
         you simply need to call the #[span.code createEvent()] function straight
         away from #[span.code cell-dblclick]:
-      v-layout(row wrap)
-        v-card.flex.my-2.mr-3.main-content(style="height: 280px")
+      v-layout(wrap)
+        v-card.flex.my-2.mr-3(style="height: 280px")
           vue-cal.vuecal--green-theme.vuecal--full-height-delete(
             ref="vuecal3"
             selected-date="2018-11-19"
@@ -1013,13 +1013,13 @@
       p.my-2.
         To allow an external button to create events, you will need to call the
         vue-cal #[span.code createEvent()] function from a Vue ref.
-      v-layout.mb-3(row align-center)
+      v-layout.mb-3(align-center)
         | This
         v-btn.mx-1(x-small color="primary" @click="customEventCreation") button
         | will prompt you to choose a date and time as the event start.
 
-      v-layout(row align-top wrap)
-        v-card.flex.my-2.mr-3.main-content(style="height: 280px")
+      v-layout(align-top wrap)
+        v-card.flex.my-2.mr-3(style="height: 280px")
           vue-cal.vuecal--green-theme.vuecal--full-height-delete(
             ref="vuecal"
             selected-date="2018-11-19"
@@ -1103,7 +1103,7 @@
       p.
         In this example, we are adding a dialog box to the default simple click &amp; hold.#[br]
         The dialog box will allow you to set all the event attributes.
-      v-layout(row wrap)
+      v-layout(wrap)
         v-card.flex.my-2.mr-3.main-content(style="height: 280px")
           vue-cal.vuecal--green-theme.vuecal--full-height-delete(
             selected-date="2018-11-19"
@@ -1268,17 +1268,7 @@
     Recurrring events work like a set of single day events linked together.#[br]
     That means, deleting, resizing or editing one of the day will apply to all the other days.
   v-card.my-4.ma-auto.py-12.grey.lighten-5.elevation-1
-    .text-center.code Demo coming soon.
-  //- v-card.my-2.ma-auto.main-content
-    vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
-      selected-date="2018-11-19"
-      :time-from="8 * 60"
-      :time-to="23 * 60"
-      hide-weekends
-      events-count-on-year-view
-      editable-events
-      show-all-day-events
-      :events="recurringEvents")
+    .text-center.headline.grey--text Demo coming soon.
   sshpre(language="html-vue" label="Vue Template").
     &lt;vue-cal selected-date="2018-11-19"
              :time-from="8 * 60"
