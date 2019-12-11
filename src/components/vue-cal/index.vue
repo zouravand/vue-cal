@@ -1,5 +1,5 @@
 <template lang="pug">
-.vuecal__flex.vuecal(column :class="cssClasses" ref="vuecal" :lang="locale")
+.vuecal(column :class="cssClasses" ref="vuecal" :lang="locale")
   vuecal-header(
     :options="$props"
     :view-props="{ views, view, weekDaysInHeader }"

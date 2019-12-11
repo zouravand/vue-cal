@@ -21,7 +21,7 @@ $splits-headers-height: 1.5em;
 
   &--xsmall {font-size: 0.9em;}
 
-  &__flex {
+  &, &__flex {
     display: flex;
     flex-direction: row;
 
