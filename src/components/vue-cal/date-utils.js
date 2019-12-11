@@ -12,6 +12,8 @@ const todayFormatted = () => {
 }
 
 const initDatePrototypes = function () {
+  Date.texts = { weekDays: Array(7).fill(''), months: Array(12).fill('') }
+
   // eslint-disable-next-line
   Date.prototype.addDays = function (days) {
     const date = new Date(this.valueOf())
@@ -48,21 +50,19 @@ const initDatePrototypes = function () {
 
   // eslint-disable-next-line
   Date.prototype.format = function (format = 'yyyy-mm-dd') {
-    return formatDate(this, format, Date.prototype.texts)
+    return formatDate(this, format, Date.texts)
   }
 
   // eslint-disable-next-line
   Date.prototype.formatTime = function (format = 'HH:mm') {
-    return formatTime(this.getHours() * 60 + this.getMinutes(), format, Date.prototype.texts)
+    return formatTime(this.getHours() * 60 + this.getMinutes(), format, Date.texts)
   }
 }
 
 // Add prototypes ASAP.
 if (Date && !Date.prototype.addDays) initDatePrototypes()
 
-export const updateDateTexts = function (texts) {
-  Date.prototype.texts = texts
-}
+export const updateDateTexts = texts => { Date.texts = texts }
 
 // Returns today if it's FirstDayOfWeek (Monday or Sunday) or previous FirstDayOfWeek otherwise.
 export const getPreviousFirstDayOfWeek = (date = null, weekStartsOnSunday) => {
@@ -148,9 +148,10 @@ export const formatDateLite = date => {
  */
 export const stringToDate = date => {
   if (date instanceof Date) return date
-  // Old code - less performant.
+  // Regexp way is less performant: https://jsperf.com/string-to-date-regexp-vs-new-date
   // const [, y, m, d, h = 0, min = 0] = date.match(/(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/)
   // return new Date(y, parseInt(m) - 1, d, h, min)
+
   return new Date(date.replace(/-/g, '/')) // replace '-' with '/' for Safari.
 }
 
