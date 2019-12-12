@@ -111,7 +111,7 @@
                         @blur="onEventTitleBlur($event, event)"
                         v-html="event.title")
                       .vuecal__event-title(v-else-if="event.title" v-html="event.title")
-                      .vuecal__event-time(v-if="(event.startTimeMinutes || event.endTimeMinutes) && !(view === 'month' && event.allDay && showAllDayEvents === 'short') && !isShortMonthView")
+                      .vuecal__event-time(v-if="(event.startTimeMinutes || event.endTimeMinutes) && !(view === 'month' && (event.allDay || showAllDayEvents === 'short')) && !isShortMonthView")
                         | {{ formatTime(event.startTimeMinutes) }}
                         span(v-if="event.endTimeMinutes") &nbsp;- {{ formatTime(event.endTimeMinutes) }}
                         small.days-to-end(v-if="event.daysCount > 1 && (event.segments[cell.formattedDate] || {}).isFirstDay") &nbsp;+{{ event.daysCount - 1 }}{{ (texts.day[0] || '').toLowerCase() }}
@@ -480,7 +480,7 @@ export default {
 
       // First remove the events that are not in view and clear occurrences if any (recurring events).
       events = events.filter(e => {
-        // If there are any event occurrences - case of reccurring events - delete them as we change view.
+        // If there are any event occurrences - case of recurring events - delete them as we change view.
         delete e.occurrences
         return eventInRange(e, startDate, endDate)
       })

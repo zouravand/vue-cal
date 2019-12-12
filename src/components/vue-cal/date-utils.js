@@ -45,7 +45,7 @@ const initDatePrototypes = function () {
   // eslint-disable-next-line
   Date.prototype.isLeapYear = function () {
     const year = this.getFullYear()
-    return !(year % 400) || (year % 100 && !(year % 4));
+    return !(year % 400) || (year % 100 && !(year % 4))
   }
 
   // eslint-disable-next-line

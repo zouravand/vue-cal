@@ -2,9 +2,9 @@ import Vue from 'vue'
 import { formatDateLite, stringToDate, formatTime, countDays, datesInSameTimeStep } from './date-utils'
 
 const defaultEventDuration = 2 // In hours.
-// This is an approximation, it will not work with DLS time.
-const approxDayMilliseconds = 24 * 3600 * 1000
 const minutesInADay = 24 * 60 // Don't do the maths every time.
+// This is an approximation, it will not work with DLS time.
+const approxDayMilliseconds = minutesInADay * 60 * 1000
 // This is an approximate minimum we can get in a year. Purposely stay bellow 365 but close.
 const minYearMilliseconds = 364 * approxDayMilliseconds // Don't do the maths every time.
 

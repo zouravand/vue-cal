@@ -1303,7 +1303,7 @@
           allDay: true,
           repeat: {
             weekdays: [5] // If original event day is not in these days, original event will still show up.
-            // With no `until` property, it will go on forever.
+            // Without `until` property, it will go on forever.
           }
         },
         {
@@ -1332,7 +1332,7 @@
           start: '2018-11-01',
           end: '2018-11-01',
           title: 'Crêpes day',
-          content: '&lt;i class="v-icon material-icons"&gt;queue_music&lt;/i&gt;',
+          content: '&lt;i class="v-icon material-icons"&gt;restaurant&lt;/i&gt;',
           class: 'yellow-event',
           allDay: true,
           repeat: {
@@ -2700,7 +2700,7 @@
         With #[span.code twelveHour] set to #[span.code true] (use #[span.code twelve-hour] in template),
         the time format will show 12 hours suffixed with am/pm.
     li
-      a(name="time-format" id="time-format")
+      a(id="time-format" name="time-format")
       code.mr-2 timeFormat
       span.code [String], default: ''
       p.mb-2.
@@ -2971,6 +2971,10 @@
         If you can't use the formatting functions because your locale (language) is trickier than that,
         feel free to open an issue to discuss it.
 
+  highlight-message(type="warning")
+    strong.
+      To allow formatting both date and time in the same function, the formatting keywords will probably change in a
+      next version since the month and minutes keywords are conflicting (#[strong.code.black--text mm] and #[strong.code.black--text m]).
 
   h2.headline.mt-12.pt-12
     a(href="#css-notes") CSS Notes

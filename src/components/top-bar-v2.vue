@@ -315,9 +315,7 @@ $lighter-text: #ccc;
 
   .top-bar.scrolled,
   .top-bar.scrolled .v-toolbar__content,
-  .scrolled .top-bar__logo-link {
-    height: 32px !important;
-  }
+  .scrolled .top-bar__logo-link {height: 32px !important;}
 
   .top-bar__items .v-btn {padding: 0 10px !important;}
 }
