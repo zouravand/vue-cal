@@ -111,7 +111,7 @@
                         @blur="onEventTitleBlur($event, event)"
                         v-html="event.title")
                       .vuecal__event-title(v-else-if="event.title" v-html="event.title")
-                      .vuecal__event-time(v-if="(event.startTimeMinutes || event.endTimeMinutes) && !(view === 'month' && (event.allDay || showAllDayEvents === 'short')) && !isShortMonthView")
+                      .vuecal__event-time(v-if="time && !event.allDay && (event.startTimeMinutes || event.endTimeMinutes) && !(view === 'month' && (event.allDay || showAllDayEvents === 'short')) && !isShortMonthView")
                         | {{ formatTime(event.startTimeMinutes) }}
                         span(v-if="event.endTimeMinutes") &nbsp;- {{ formatTime(event.endTimeMinutes) }}
                         small.days-to-end(v-if="event.daysCount > 1 && (event.segments[cell.formattedDate] || {}).isFirstDay") &nbsp;+{{ event.daysCount - 1 }}{{ (texts.day[0] || '').toLowerCase() }}
@@ -144,7 +144,7 @@ const textsDefaults = {
   allDay: '',
   deleteEvent: '',
   createEvent: '',
-  dateFormat: 'DDDD mmmm d, yyyy',
+  dateFormat: 'dddd MMMM D, YYYY',
   am: 'am',
   pm: 'pm'
 }
@@ -842,6 +842,8 @@ export default {
       ]
       discardProps.forEach(prop => { if (prop in event) delete event[prop] })
 
+      if (!event.repeat) delete event.repeat // If empty we don't need it.
+
       return event
     },
 
@@ -886,7 +888,7 @@ export default {
      * @param {String} format the wanted format.
      * @return {String} the formatted date.
      */
-    formatDate (date, format = 'yyyy-mm-dd') {
+    formatDate (date, format = 'YYYY-MM-DD') {
       return formatDate(date, format, this.texts)
     },
 
@@ -932,6 +934,13 @@ export default {
       // Updating `now` will re-trigger the computed `todaysTimePosition` in cell.vue.
       this.now = new Date()
       this.timeTickerIds[1] = setTimeout(this.timeTick, 60 * 1000) // Every minute.
+    },
+
+    /**
+     * Callable from outside of Vue Cal.
+     */
+    updateDateTexts () {
+      updateDateTexts(this.texts)
     }
   },
 
@@ -1096,14 +1105,22 @@ export default {
           break
         }
         case 'week': {
-          const lastDayOfWeek = date.addDays(6)
-          let formattedMonthYear = this.formatDate(date, this.xsmall ? 'mmm yyyy' : 'mmmm yyyy')
+          const lastDayOfWeek = this.view.endDate // Might be another day than Sunday, if hiding days.
+          const y1 = date.getFullYear()
+          let m1 = this.texts.months[date.getMonth()]
+          if (this.xsmall) m1 = m1.substring(0, 3)
+          let formattedMonthYear = `${m1} ${y1}`
 
           // If week is not ending in the same month it started in.
           if (lastDayOfWeek.getMonth() !== date.getMonth()) {
-            const [m1, y1] = formattedMonthYear.split(' ')
-            const [m2, y2] = this.formatDate(lastDayOfWeek, this.xsmall ? 'mmm yyyy' : 'mmmm yyyy').split(' ')
-            formattedMonthYear = y1 === y2 ? `${m1} - ${m2} ${y1}` : `${m1} ${y1} - ${m2} ${y2}`
+            const y2 = lastDayOfWeek.getFullYear()
+            let m2 = this.texts.months[lastDayOfWeek.getMonth()]
+            if (this.xsmall) m2 = m2.substring(0, 3)
+            if (y1 === y2) formattedMonthYear = `${m1} - ${m2} ${y1}`
+            else {
+              if (this.small) formattedMonthYear = `${m1.substring(0, 3)} ${y1} - ${m2.substring(0, 3)} ${y2}`
+              else formattedMonthYear = `${m1} ${y1} - ${m2} ${y2}`
+            }
           }
           title = `${this.texts.week} ${date.getWeek()} (${formattedMonthYear})`
           break
