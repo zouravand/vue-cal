@@ -49,8 +49,8 @@ export default {
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
         repeat: {
-          every: 'day', // OK.
-          // every: 'week', // OK.
+          // every: 'day', // OK.
+          every: 'week', // OK.
           // every: 'month', // OK.
           // every: 'year', // OK.
           // every: 10, // OK.

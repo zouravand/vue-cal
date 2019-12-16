@@ -523,46 +523,89 @@ export const recurringEventInRange = (event, start, end) => {
 // It calculates event occurences in a full year (`year` view) or in 25 years (`years` view).
 export const recurringEventInRangeLite = (event, start, end) => {
   const {every, weekdays, until } = event.repeat
-  // On `years` view, a cell is a full year, on `year` view a cell is a month.
-  const yearsView = start.getMonth() !== end.getMonth()
-
+  // If starts after the end of `repeat.until` date then return false.
   if (until && start.getTime() >= stringToDate(until).getTime()) return false
-  event.occurrences = 0
+  if (event.occurrences && Object.keys(event.occurrences).length) return true
+
+  // On `years` view, a cell is a full year, on `year` view a cell is a month.
+  const yearsView = start.getFullYear() !== end.getFullYear()
+
+  event.occurrences = {}
+  if (yearsView) {
+    // Loop through years.
+    let i = Math.max(event.startDate.getFullYear(), start.getFullYear())
+    let endYear = until ? Math.min(end.getFullYear(), stringToDate(until)) : end.getFullYear()
+    for (i, endYear; i <= endYear; i++) {
+      // if (event.)
+      // @todo: do the exact count.
+      event.occurrences[i] = 52
+    }
+  }
+  else {
+    // Loop through months.
+    for (let i = 1; i <= 12; i++) {
+      // @todo: do the exact count.
+      event.occurrences[i] = 4
+    }
+  }
+
+  // event.occurrences = 0
   // debugger
 
-  if (every) {
+  /* if (every) {
     switch (every) {
       case 'day': {
         event.occurrences = yearsView ? (start.isLeapYear() ? 366 : 365) : end.getDate()
         break
       }
       case 'week': {
-        event.occurrences = 52
+        event.occurrences = {}
+        if (yearsView) {
+          for (let y1 = start.getFullYear(), y2 = end.getFullYear(); y1 <= y2; y1++) {
+            // @todo: do the exact count.
+            event.occurrences[y1] = 52
+          }
+        }
+        else {
+          for (let i = 1; i <= 12; i++) {
+            // @todo: do the exact count.
+            event.occurrences[i] = 4
+          }
+        }
+        // event.occurrences = yearsView ? end.getWeek() : 4
         break
       }
       case 'month': {
-        event.occurrences = 12
-        // event.occurrences = {}
-        // event.occurrences['2018-01-01'] = 1
-        // event.occurrences['2018-02-01'] = 1
-        // event.occurrences['2018-03-01'] = 1
-        // event.occurrences['2018-04-01'] = 1
-        // event.occurrences['2018-05-01'] = 1
-        // event.occurrences['2018-06-01'] = 1
-        // event.occurrences['2018-07-01'] = 1
-        // event.occurrences['2018-08-01'] = 1
-        // event.occurrences['2018-09-01'] = 1
-        // event.occurrences['2018-10-01'] = 1
-        // event.occurrences['2018-11-01'] = 1
-        // event.occurrences['2018-12-01'] = 1
+        if (yearsView) event.occurrences = 12
+        else {
+          // @todo: do the exact count.
+          event.occurrences = {}
+          event.occurrences['2018-01-01'] = 1
+          event.occurrences['2018-02-01'] = 1
+          event.occurrences['2018-03-01'] = 1
+          event.occurrences['2018-04-01'] = 1
+          event.occurrences['2018-05-01'] = 1
+          event.occurrences['2018-06-01'] = 1
+          event.occurrences['2018-07-01'] = 1
+          event.occurrences['2018-08-01'] = 1
+          event.occurrences['2018-09-01'] = 1
+          event.occurrences['2018-10-01'] = 1
+          event.occurrences['2018-11-01'] = 1
+          event.occurrences['2018-12-01'] = 1
+        }
         break
       }
       case 'year': {
-        event.occurrences = 1
+        if (yearsView) {
+          event.occurrences = event.start.getMonth() !== 1 && event.start.getDate() !== 29 ? 1 : (start.isLeapYear() * 1)
+        }
+        // @todo: do the exact count.
+        else event.occurrences = 1
         break
       }
       default: {
         // If `every` is a number.
+        // @todo: do the exact count.
         if (!isNaN(every)) event.occurrences = 1000
         break
       }
@@ -571,7 +614,7 @@ export const recurringEventInRangeLite = (event, start, end) => {
   else if (weekdays) {
     event.occurrences = {}
     event.occurrences['2018-01-01'] = weekdays.length * 52
-  }
+  } */
 
   return true
 }
