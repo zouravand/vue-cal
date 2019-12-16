@@ -309,8 +309,13 @@ export default {
     },
     // Including all the repeated events occurrences if there are.
     totalEventsCount () {
+      const cellYear = this.data.startDate.getFullYear()
+      const cellMonth = this.data.startDate.getMonth() + 1
+
       return this.events.reduce((sum, e) => {
         const { occurrences = 0 } = e
+        if (this.view === 'years') return sum += occurrences[cellYear] || 0
+        if (this.view === 'year') return sum += occurrences[cellMonth] || 0
         return sum += occurrences && isNaN(occurrences) ? Object.keys(occurrences).length : occurrences
       }, 0)
     },

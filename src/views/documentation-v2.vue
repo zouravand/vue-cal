@@ -457,7 +457,12 @@
     Refer to the #[span.code locale] option in the #[a(href="#api") API] section to know more or if you want to provide a translation.#[br]
     Try it in Codepen: #[a(href="https://codepen.io/antoniandre/pen/dxXvwv" target="_blank") Vue Cal - Internationalization].
   v-card.my-2.ma-auto.main-content(style="width: 500px;height: 340px;max-width: 100%")
-    vue-cal.vuecal--green-theme(:time="false" small default-view="year" :locale="locale")
+    vue-cal.vuecal--green-theme(
+      :time="false"
+      small
+      default-view="year"
+      :locale="locale"
+      @ready="overrideDateTexts")
   sshpre(language="html-vue" label="Vue Template").
     &lt;v-select :items="localesList" v-model="locale"&gt;&lt;/v-select&gt;
     &lt;vue-cal hide-view-selector :time="false" small default-view="year" :locale="locale"&gt;&lt;/vue-cal&gt;
@@ -511,7 +516,8 @@
       xsmall
       :time-cell-height="26"
       default-view="day"
-      :disable-views="['years', 'year', 'month']")
+      :disable-views="['years', 'year', 'month']"
+      @ready="scrollToCurrentTime('.ex--today-current-time-and-disabled-views')")
   sshpre(language="html-vue" label="Vue Template").
     &lt;vue-cal xsmall
              default-view="day"
@@ -658,10 +664,6 @@
     Note that the events are always selectable (drop shadow and higher z-index), even when uneditable.
     The difference with timeless events is that a time is set in the #[span.code start] and #[span.code end] attributes of the events.
 
-  highlight-message.mt-3(type="tips").
-    Important Note: If you want to end an event at #[span.code 00:00], you have to set
-    #[span.code 24:00] instead, to keep it to the same day you intended.
-
   v-card.my-2.ma-auto.main-content
     vue-cal.vuecal--green-theme(
       selected-date="2018-11-19"
@@ -722,7 +724,7 @@
              :events="events"
              :on-event-click="onEventClick"&gt;
     &lt;/vue-cal&gt;
-    ...
+
     &lt;!-- Using Vuetify --&gt;
     &lt;v-dialog v-model="showDialog"&gt;
       &lt;v-card&gt;
@@ -730,15 +732,17 @@
           &lt;v-icon&gt;{{ '\{\{ selectedEvent.icon \}\}' }}&lt;/v-icon&gt;
           &lt;span&gt;{{ '\{\{ selectedEvent.title \}\}' }}&lt;/span&gt;
           &lt;v-spacer/&gt;
-          &lt;strong&gt;{{ '\{\{ (selectedEvent.start || \'\').substr(0, 10) \}\}' }}&lt;/strong&gt;
+          &lt;strong&gt;{{ "\{\{ selectedEvent.startDate && selectedEvent.startDate.format('DD/MM/YYYY') \}\}" }}&lt;/strong&gt;
         &lt;/v-card-title&gt;
         &lt;v-card-text&gt;
           &lt;p v-html="selectedEvent.contentFull"/&gt;
           &lt;strong&gt;Event details:&lt;/strong&gt;
           &lt;ul&gt;
-            &lt;!-- You can also manipulate the Date objects `startDate` &amp; `endDate`. --&gt;
-            &lt;li&gt;Event starts at: {{ '\{\{ (selectedEvent.start || \'\').substr(11) \}\}' }}&lt;/li&gt;
-            &lt;li&gt;Event ends at: {{ '\{\{ (selectedEvent.end || \'\').substr(11) \}\}' }}&lt;/li&gt;
+            &lt;li&gt;Event starts at: {{ '\{\{ selectedEvent.startDate && selectedEvent.startDate.formatTime() \}\}' }}&lt;/li&gt;
+            &lt;li&gt;Event ends at: {{ '\{\{ selectedEvent.endDate && selectedEvent.endDate.formatTime() \}\}' }}&lt;/li&gt;
+            &lt;!-- You can also manipulate the `start` &amp; `end` formatted strings.
+            &lt;li&gt;Event starts at: {{ '\{\{ (selectedEvent.start || \'\').substring(11) \}\}' }}&lt;/li&gt;
+            &lt;li&gt;Event ends at: {{ '\{\{ (selectedEvent.end || \'\').substring(11) \}\}' }}&lt;/li&gt; --&gt;
           &lt;/ul&gt;
         &lt;/v-card-text&gt;
       &lt;/v-card&gt;
@@ -1053,22 +1057,23 @@
       sshpre.mt-3(language="js" label="Javascript").
         // In methods.
         customEventCreation () {
-            const dateTime = prompt('Create event on (yyyy-mm-dd hh:mm)', '2018-11-20 13:15')
+            const dateTime = prompt('Create event on (YYYY-MM-DD HH:mm)', '2018-11-20 13:15')
 
             // Check if date format is correct before creating event.
-            if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date)) {
+            if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dateTime)) {
               this.$refs.vuecal.createEvent(
                 // Formatted start date and time or JavaScript Date object.
                 dateTime,
                 // Custom event props (optional).
                 { title: 'New Event', content: 'yay! 🎉', classes: ['leisure'] }
               )
-            } else if (date) alert('Wrong date format.')
+            } else if (dateTime) alert('Wrong date format.')
         }
       highlight-message(type="warning").
         Note that you can also override the default end date (2 hours duration),
         by setting the property #[span.code end], but for internal Vue Cal calculations
-        #[strong you will also need to set the property #[span.code endTimeMinutes]].
+        #[strong you will also need to set the property #[span.code endTimeMinutes]].#[br]
+        E.g. #[span.code { end: '2018-11-20 14:00', endTimeMinutes: 14 * 60 }].
 
     li.mt-12
       h5.subtitle-1.font-weight-bold Adding a dialog box to the default #[strong cell click &amp; hold] behavior
@@ -1092,13 +1097,13 @@
         /**
         * @param event {Object} The newly created event that you can override.
         * @param deleteEventFunction {Function} Allows you to delete this event programmatically.
-        * @return {Object} The event to be passed back to Vue Cal.
+        * @return {Object | false} The event to be passed back to Vue Cal, or false to reject creation.
         */
         onEventCreate (event, deleteEventFunction) {
             // You can modify event here and return it.
             // You can also return false to reject the event creation.
             return event
-          }
+        }
 
       p.
         In this example, we are adding a dialog box to the default simple click &amp; hold.#[br]
@@ -1303,7 +1308,7 @@
           allDay: true,
           repeat: {
             weekdays: [5] // If original event day is not in these days, original event will still show up.
-            // With no `until` property, it will go on forever.
+            // Without `until` property, it will go on forever.
           }
         },
         {
@@ -1332,7 +1337,7 @@
           start: '2018-11-01',
           end: '2018-11-01',
           title: 'Crêpes day',
-          content: '&lt;i class="v-icon material-icons"&gt;queue_music&lt;/i&gt;',
+          content: '&lt;i class="v-icon material-icons"&gt;restaurant&lt;/i&gt;',
           class: 'yellow-event',
           allDay: true,
           repeat: {
@@ -1344,7 +1349,7 @@
           start: '2015-06-15',
           end: '2015-06-15',
           title: 'My Birthday',
-          content: '&lt;i class="v-icon material-icons"&gt;cake&lt;/i&gt;<br>I am 4.',
+          content: '&lt;i class="v-icon material-icons"&gt;cake&lt;/i&gt;&lt;br&gt;I am 4.',
           class: 'blue-event',
           allDay: true,
           repeat: {
@@ -1917,7 +1922,7 @@
           Will return the time (in minutes) at the cursor position when a DOM event occurs.
           `e` is the DOM event.
       li
-        code formatDate(date, format = 'yyyy-mm-dd')
+        code formatDate(date, format = 'YYYY-MM-DD')
         p.
           Will return a string with formatted date (and time if given) using the loaded locale.#[br]
           For the formatting syntax, refer to the #[span.code locale] &amp; #[span.code timeFormat]
@@ -2007,22 +2012,22 @@
   v-card.my-2.ma-auto.main-content
     vue-cal.vuecal--green-theme(
       selected-date="2018-11-19"
-      :time-from="7 * 60"
+      :time-from="9 * 60"
       :time-to="23 * 60"
       :disable-views="['years', 'year', 'month']"
       hide-weekends
       :events="eventsCopy")
   sshpre(language="html-vue" label="Vue Template").
     &lt;button @click="events.push({
-           start: '2018-11-20 12:00',
-           end: '2018-11-20 17:00',
-           title: 'A new event',
-           class: 'blue-event'
+        start: '2018-11-20 12:00',
+        end: '2018-11-20 17:00',
+        title: 'A new event',
+        class: 'blue-event'
     })"&gt;Add an event&lt;/button&gt;
     &lt;button @click="events.pop()"&gt;Remove last event&lt;/button&gt;
 
     &lt;vue-cal selected-date="2018-11-19"
-             :time-from="7 * 60"
+             :time-from="9 * 60"
              :time-to="23 * 60"
              :disable-views="['years', 'year', 'month']"
              hide-weekends
@@ -2063,6 +2068,46 @@
       li #[span.code no-event]
       li #[span.code events-count]
       li #[span.code event-renderer]
+
+  //- Example.
+  h4.title
+    a(href="#ex--scroll-to-time") # Scroll the view to a particular time
+    a#ex--scroll-to-time(name="ex--scroll-to-time")
+  p.mb-0.
+    It is quite easy to scroll to a particular time, and the user has the choice to add this outside of Vue Cal:
+
+  v-btn.mt-2.mr-2(small color="primary" @click="scrollToCurrentTime('.ex--scroll-to-time')")
+    v-icon vertical_align_bottom
+    | Scroll to current time
+  v-btn.mt-2.mr-2(small color="primary" @click="scrollToTop('.ex--scroll-to-time')")
+    v-icon vertical_align_top
+    | Scroll to top
+  v-layout(wrap)
+    v-card.my-4.mr-2.flex(style="width: 360px;height: 360px;max-width: 100%")
+      vue-cal.ex--scroll-to-time.vuecal--green-theme(
+        small
+        default-view="day"
+        :disable-views="['years', 'year', 'month', 'week']"
+        hide-view-selector
+        :time-cell-height="timeCellHeight"
+        @ready="scrollToCurrentTime('.ex--scroll-to-time')")
+    .flex
+      sshpre.mt-4.flex(language="html-vue" label="Vue Template").
+        &lt;vue-cal id="vuecal"
+                 :time-cell-height="timeCellHeight"
+                 @ready="scrollToCurrentTime"&gt;
+        &lt;/vue-cal&gt;
+      sshpre.mt-4.flex(language="js" label="Javascript").
+        // `timeCellHeight` is set to 26 in the component data.
+        scrollToCurrentTime () {
+          const calendar = document.querySelector('#vuecal .vuecal__bg')
+          const hours = this.now.getHours() + this.now.getMinutes() / 60
+          calendar.scrollTo({ top: hours * this.timeCellHeight, behavior: 'smooth' })
+        },
+        scrollToTop () {
+          const calendar = document.querySelector('#vuecal .vuecal__bg')
+          calendar.scrollTo({ top: 0, behavior: 'smooth' })
+        }
 
   //- Example.
   h4.title
@@ -2269,9 +2314,12 @@
       default-view="month"
       :events="events")
       template(v-slot:title="{ title, view }")
-        | 🎉&nbsp;{{ view.startDate.getFullYear() }}-{{ (view.startDate.getMonth() + 1) < 10 ? '0' : '' }}{{ view.startDate.getMonth() + 1 }}
-        span(v-if="view.id === 'week'") &nbsp;—&nbsp;w{{ view.startDate.getWeek() }}
-        span(v-else-if="view.id === 'day'") -{{ view.startDate.getDate() < 10 ? '0' : '' }}{{ view.startDate.getDate() }}
+        | 🎉&nbsp;
+        span(v-if="view.id === 'years'") Years
+        span(v-else-if="view.id === 'year'") {{ view.startDate.format('YYYY') }}
+        span(v-else-if="view.id === 'month'") {{ view.startDate.format('MMMM YYYY') }}
+        span(v-else-if="view.id === 'week'") w{{ view.startDate.getWeek() }} ({{ view.startDate.format('MMM YYYY') }})
+        span(v-else-if="view.id === 'day'") {{ view.startDate.format('dddd D MMMM YY') }}
         | &nbsp;🎉
       template(v-slot:cell-content="{ cell, view, events, goNarrower }")
         span.vuecal__cell-date.clickable(v-if="view.id !== 'day'" :class="view.id" @click="goNarrower") {{ cell.content }}
@@ -2286,11 +2334,13 @@
 
       &lt;!-- Custom title --&gt;
       &lt;template v-slot:title="{ title, view }"&gt;
-        🎉 {{ '\{\{ view.startDate.getFullYear() \}\}' }}-{{ '\{\{ (view.startDate.getMonth() + 1) < 10 ? \'0\' : \'\' \}\}' }}{{ '\{\{ view.startDate.getMonth() + 1 \}\}' }}
-        &lt;!-- Print week number on week view --&gt;
-        &lt;span v-if="view.id === 'week'"&gt;— w{{ '\{\{ view.startDate.getWeek() \}\}' }}&lt;/span&gt;
-        &lt;!-- Print current day on day view --&gt;
-        &lt;span v-else-if="view.id === 'day'"&gt;-{{ '\{\{ view.startDate.getDate() < 10 ? \'0\' : \'\' \}\}' }}{{ '\{\{ view.startDate.getDate() \}\}' }}&lt;/span&gt;
+        🎉
+        &lt;span v-if="view.id === 'years'"&gt;Years&lt;/span&gt;
+        &lt;!-- Using Vue Cal injected Date prototypes --&gt;
+        &lt;span v-else-if="view.id === 'year'"&gt;{{ "\{\{ view.startDate.format('YYYY') \}\}" }}&lt;/span&gt;
+        &lt;span v-else-if="view.id === 'month'"&gt;{{ "\{\{ view.startDate.format('MMMM YYYY') \}\}" }}&lt;/span&gt;
+        &lt;span v-else-if="view.id === 'week'"&gt;w{{ "\{\{ view.startDate.getWeek() \}\} (\{\{ view.startDate.format('MMM YYYY') \}\}" }})&lt;/span&gt;
+        &lt;span v-else-if="view.id === 'day'"&gt;{{ "\{\{ view.startDate.format('dddd D MMMM YY') \}\}" }}&lt;/span&gt;
         🎉
       &lt;/template&gt;
 
@@ -2361,10 +2411,10 @@
         .vuecal__event-title.mb-6(v-html="event.title")
         small.vuecal__event-time
           strong.mr-1 Event start:
-          span {{ event.start.substr(11) }}
+          span {{ event.startDate.formatTime('h O\'clock') }}
           br
           strong.mr-1 Event end:
-          span {{ event.end.substr(11) }}
+          span {{ event.endDate.formatTime('h O\'clock') }}
   sshpre(language="html-vue" label="Vue Template").
     &lt;vue-cal selected-date="2018-11-19"
              :time-from="9 * 60"
@@ -2382,11 +2432,17 @@
              v-html="event.title" /&gt;
 
         &lt;small class="vuecal__event-time"&gt;
-          &lt;strong&gt;Event start:&lt;/strong&gt; &lt;span&gt;{{ '\{\{ event.start.substr(11) \}\}' }}&lt;/span&gt;&lt;br/&gt;
-          &lt;strong&gt;Event end:&lt;/strong&gt; &lt;span&gt;{{ '\{\{ event.end.substr(11) \}\}' }}&lt;/span&gt;
+          &lt;!-- Using Vue Cal injected Date prototypes --&gt;
+          &lt;strong&gt;Event start:&lt;/strong&gt; &lt;span&gt;{{ '\{\{ event.startDate.formatTime("h O\'clock") \}\}' }}&lt;/span&gt;&lt;br/&gt;
+          &lt;strong&gt;Event end:&lt;/strong&gt; &lt;span&gt;{{ '\{\{ event.endDate.formatTime("h O\'clock") \}\}' }}&lt;/span&gt;
         &lt;/small&gt;
       &lt;/template&gt;
     &lt;/vue-cal&gt;
+
+  highlight-message.my-2(type="tips").
+    The #[a(href="#date-prototypes") #[span.code formatTime()] Date prototype] will help you format time easily,
+    but if you prefer you could also extract the time from the formatted date:
+    e.g. #[span.code event.start.substring(11)]
 
   sshpre(language="js" label="Javascript").
     events: [
@@ -2490,14 +2546,14 @@
             "allDay": "All day",
             "deleteEvent": "Delete",
             "createEvent": "Create an event",
-            "dateFormat": "DDDD d mmmm yyyy"
+            "dateFormat": "dddd D MMMM YYYY"
           }
         p.
           Regarding the #[span.code dateFormat] translation, this is the format of the full
           date you can see in a single day view title.#[br]
-          #[span.code DDDD] stands for the full-letter day of week, #[span.code mmmm] stands for
-          full-letter month, #[span.code d] stands for the date of the month (0-31),
-          #[span.code yyyy] stands for full year, #[span.code {S}] stands for st/nd/rd/th and only in English.
+          #[span.code dddd] stands for the full-letter day of week, #[span.code MMMM] stands for
+          full-letter month, #[span.code D] stands for the date of the month (0-31),
+          #[span.code YYYY] stands for full year, #[span.code {S}] stands for st/nd/rd/th and only in English.
 
       highlight-message(type="tips").
         Note that 2 media queries will shorten the days of the week to 3 letters then 1 letter when it does not fit.#[br]
@@ -2680,7 +2736,7 @@
       span.code [Number], default: 24 * 60
       p.
         If #[span.code time] is enabled, set the end of the timeline in minutes.
-        By default it ends at 23.59.
+        By default it ends at 24:00.
     li
       code.mr-2 timeStep
       span.code [Number], default: 30
@@ -2696,11 +2752,11 @@
       code.mr-2 twelveHour
       span.code [Boolean], default: false
       p.
-        If #[span.code time] is enabled, the default time format is 24hour.#[br]
+        If #[span.code time] is enabled, the default time format is 24 hour.#[br]
         With #[span.code twelveHour] set to #[span.code true] (use #[span.code twelve-hour] in template),
         the time format will show 12 hours suffixed with am/pm.
     li
-      a(name="time-format" id="time-format")
+      a(id="time-format" name="time-format")
       code.mr-2 timeFormat
       span.code [String], default: ''
       p.mb-2.
@@ -2877,13 +2933,10 @@
             | or a JavaScript #[code Date] object. Only these formats will work.#[br]
             strong You can't mix events with time and events without, and you can only remove time if the time option is set to false.
           li.mt-2.
-            You can set an event end at #[span.code 24:00] if for some reasons that's what you want,
+            You can set an event end at #[span.code 24:00] or #[span.code 00:00] if for some reasons that's what you want,
             #[strong but internally the date will be set at #[span.code 23:59:59]] so the date stays the same instead
             of natural behavior of taking the next day at #[span.code 00:00:00].#[br]
             When returned from emitted events, this event #[span.code endDate] will contain a date ending at #[span.code 23:59:59].
-          li.mt-2.
-            If you want to end an event at #[span.code 00:00], you have to set
-            #[span.code 24:00] instead, to keep it to the same day you intended.
 
   h2.headline.mt-12.pt-12
     a(href="#date-prototypes") #[strong.code Date] Prototypes
@@ -2892,16 +2945,11 @@
     | Vue Cal has no dependency and performs date operations through a few notable useful and efficient functions that
     | have been added to the native #[span.code Date] class for your convenience.#[br]
     strong.mr-2.
+      With this set of functions, you will most likely not need #[em Moment.js] or any other additional Date library!#[br]#[br]
       Once Vue Cal is loaded, you can access the following functions from anywhere in your code
       just like a simple #[span.code Date] function.
     | E.g. #[span.code (new Date()).addDays(2)]
 
-  highlight-message.my-4(type="tips")
-    ul
-      li.
-        Remember the Date functions are added when Vue Cal loads not before. You can always check if you have it before you use it:#[br]
-        #[span.code.black--text Date.prototype.format &amp;&amp; new Date().format()]
-      li With this set of functions, you will most likely not need #[em Moment.js] or any other additional Date library!
   ul
     li.mt-3
       code.mr-2 .addDays(days)
@@ -2919,7 +2967,7 @@
       | Returns true if the date is Today.
     li.mt-3
       code.mr-2 .isLeapYear()
-      | Allows you to get the week number of a Date, directly on the Date object.
+      | Returns true if the date is in a leap year.
 
   h3.mt-4 And because everyone needs a Date/time formatting function...
   p.
@@ -2929,27 +2977,35 @@
       code.mr-2 .format(format)
       div.
         Returns a formatted date string.
-        Default format is #[span.code `yyyy-mm-dd`], but you can use any formatting keyword from
+        Default format is #[span.code 'YYYY-MM-DD'], but you can use any formatting keyword from
         this list, and add any character not present in this mapping:
       ul
-        li #[strong.code.black--text yyyy]: full year. #[span.grey--text.ml-2 E.g. `2019`]
-        li #[strong.code.black--text yy]: 2 last digits of the year. #[span.grey--text.ml-2 E.g. `19`]
-        li #[strong.code.black--text mmmm]: month in full. #[span.grey--text.ml-2 E.g. `January`]
-        li #[strong.code.black--text mmm]: 3 first letters of the month. #[span.grey--text.ml-2 E.g. `Jan`]
-        li #[strong.code.black--text mm]: month number with leading zero. (01-12) #[span.grey--text.ml-2 E.g. `01`]
-        li #[strong.code.black--text m]: month number without leading zero. (1-12) #[span.grey--text.ml-2 E.g. `1`]
-        li #[strong.code.black--text dd]: date of the month with leading zero. (01-31) #[span.grey--text.ml-2 E.g. `01`]
-        li #[strong.code.black--text d]: date of the month without leading zero. (1-31) #[span.grey--text.ml-2 E.g. `1`]
-        li #[strong.code.black--text S]: (usually with surrounding #[span.code.black--text `{ }`]) only in English, will output #[span.code `st`], #[span.code `nd`], #[span.code `rd`] or #[span.code `th`].
-        li #[strong.code.black--text DDDD]: day of the week in full. #[span.grey--text.ml-2 E.g. `Monday`]
-        li #[strong.code.black--text DDD]: 3 first letters of the day of the week. #[span.grey--text.ml-2 E.g. `Mon`]
-        li #[strong.code.black--text DD]: first letter of the day of the week. #[span.grey--text.ml-2 E.g. `M`]
+        li #[strong.code.black--text YYYY]: full year. #[span.grey--text.ml-2 E.g. `2019`]
+        li #[strong.code.black--text YY]: 2 last digits of the year. #[span.grey--text.ml-2 E.g. `19`]
+        li #[strong.code.black--text MMMM]: month in full. #[span.grey--text.ml-2 E.g. `January`]
+        li #[strong.code.black--text MMM]: 3 first letters of the month. #[span.grey--text.ml-2 E.g. `Jan`]
+        li #[strong.code.black--text MM]: month number with leading zero. (01-12) #[span.grey--text.ml-2 E.g. `01`]
+        li #[strong.code.black--text M]: month number without leading zero. (1-12) #[span.grey--text.ml-2 E.g. `1`]
+        li #[strong.code.black--text DD]: date of the month with leading zero. (01-31) #[span.grey--text.ml-2 E.g. `01`]
+        li #[strong.code.black--text D]: date of the month without leading zero. (1-31) #[span.grey--text.ml-2 E.g. `1`]
+        li.
+          #[strong.code.black--text S]: (usually with surrounding #[span.code.black--text `{ }`]) only in English,
+          will output #[span.code `st`], #[span.code `nd`], #[span.code `rd`] or #[span.code `th`].
+        li #[strong.code.black--text dddd]: day of the week in full. #[span.grey--text.ml-2 E.g. `Monday`]
+        li #[strong.code.black--text ddd]: 3 first letters of the day of the week. #[span.grey--text.ml-2 E.g. `Mon`]
+        li #[strong.code.black--text dd]: first letter of the day of the week. #[span.grey--text.ml-2 E.g. `M`]
+        li #[strong.code.black--text d]: number of the day of the week. (1-7) #[span.grey--text.ml-2 E.g. `1` for Monday]
+        li #[strong.black--text And also all the keywords from the following #[span.code formatTime()] function.]
 
     li.mt-3
       code.mr-2 .formatTime(format)
       div.
         Returns a formatted time string.#[br]
-        Default format is 'HH:mm', but you can use any formatting keyword from
+        The #[span.code format()] function can also do this, but this might be a shortcut if you just want
+        the default time formatting.#[br]
+        E.g. `#[span.code formatTime()]`).#[br]
+        This function will also be slightly faster than #[span.code format()] as lighter in functionality.#[br]
+        Default format is #[span.code 'HH:mm'], but you can use any formatting keyword from
         this list, and add any character not present in this mapping:
       ul
         li #[strong.code.black--text HH]: Hours with leading zero, 24-hour format. (00-24)#[span.grey--text.ml-2 E.g. `20`]
@@ -2960,17 +3016,16 @@
         li #[strong.code.black--text m]: Minutes without leading zero. #[span.grey--text.ml-2 E.g. `8`]
         li #[strong.code.black--text am]: (usually with surrounding #[span.code.black--text `{ }`]) am or pm (also localized if any)
 
-  highlight-message(type="tips")
+  highlight-message.my-4(type="tips")
     ul
       li.
         To separate 2 keywords or a keyword and another text not from this list without adding spaces or
         any separation, you can use the delimiters #[span.code.black--text `{ }`].#[br]
-        For instance #[span.code `new Date().format('yyyy{mm}dd')`] (or even #[span.code `{yyyy}{mm}{dd}`]) will produce:
+        For instance #[span.code `new Date().format('YYYY{MM}DD')`] (or even #[span.code `{YYYY}{MM}{DD}`]) will produce:
         "#[span.code {{ nowFormatted }}]".
-      li.
-        If you can't use the formatting functions because your locale (language) is trickier than that,
-        feel free to open an issue to discuss it.
-
+      li.mt-4.
+        The Date functions are added when Vue Cal loads, you can always check if you have it before you use it:#[br]
+        #[span.code.black--text Date.prototype.format &amp;&amp; new Date().format()]
 
   h2.headline.mt-12.pt-12
     a(href="#css-notes") CSS Notes
@@ -3019,15 +3074,35 @@
     By default the selection is disabled in the whole calendar except in the events.
     you can override this by CSS.
 
-  h2.headline.mt-12.pt-12.mb-2
+  //- Release notes.
+  h2.headline.mt-12.pt-12.mb-4
     a(href="#release-notes") Release Notes
     a#release-notes(name="release-notes")
 
   div #[strong Version 2.15.0]
     ul
+      li New Date prototype functions, refer to: #[a(href="#date-prototypes") Date prototypes]
+      li Scroll the view to a particular time: #[a(href="#ex--scroll-to-time") see the example]
+      li Fix bug where timeless and all-day events were displaying time
+    highlight-message.mb-2(type="warning")
+      ul
+        li.
+          #[strong The big "recurring event" feature is coming soon!]#[br]
+          In this release, lots of refactored code is merged back into the master branch
+          from the recurring-event branch to support the new feature.
+        li
+          strong.
+            To allow formatting both date and time in the same Date prototype function,
+            the formatting keywords have changed, since the month and minutes keywords were
+            both #[strong.code.black--text mm] but in 2 different functions.#[br]
+            The new formatting keywords are more commonly used, the default format is now #[span.code `YYYY-MM-DD`].#[br]
+            Ref. #[a(href="#date-prototypes") Date prototypes]
+
+  div.mt-4 #[strong Version 2.15.0]
+    ul
       li Allow ending an event at #[span.code 00:00] both from #[span.code event.end] and #[span.code event.endDate]
       li Prevent resizing an event bellow a 1 minute duration or a minimum height of 5px.
-  div #[strong Version 2.14.0] Allow custom weekday render (#[span.code month] &amp; #[span.code week] views)
+  div.mt-2 #[strong Version 2.14.0] Allow custom weekday render (#[span.code month] &amp; #[span.code week] views)
   div #[strong Version 2.13.0] Added Indonesian language
   div #[strong Version 2.12.0] Added the #[span.code overlapsPerTimeStep] option
   div #[strong Version 2.11.0] Added Greek language
@@ -3273,17 +3348,17 @@
 
   v-dialog(v-model="showDialog" max-width="600")
     v-card
-      v-card-title.primary.white--text
+      v-card-title.primary.white--text.py-2
         v-icon.mr-3(color="white") {{ selectedEvent.icon }}
         span.headline.text-uppercase {{ selectedEvent.title }}
         v-spacer
-        strong {{ (selectedEvent.start || '').substr(0, 10) }}
-      v-card-text
+        strong {{ selectedEvent.startDate && selectedEvent.startDate.format('DD/MM/YYYY') }}
+      v-card-text.py-4
         p(v-html="selectedEvent.contentFull")
         strong Event details:
         ul
-          li Event starts at: -{{ (selectedEvent.start || '').substr(11) }}
-          li Event ends at: -{{ (selectedEvent.end || '').substr(11) }}
+          li Event starts at: {{ selectedEvent.startDate && selectedEvent.startDate.formatTime() }}
+          li Event ends at: {{ selectedEvent.endDate && selectedEvent.endDate.formatTime() }}
 
   v-dialog(v-model="showEventCreationDialog" :persistent="true" max-width="420")
     v-card
@@ -3451,6 +3526,7 @@ export default {
     },
     example1theme: 'green',
     minEventWidth: 0,
+    timeCellHeight: 26,
     indicatorStyle: 'count',
     now: new Date(),
     logs: [],
@@ -3770,6 +3846,15 @@ export default {
       this.logs = []
     },
     customEventsCount: events => events ? events.filter(e => e.class === 'leisure').length : 0,
+    scrollToCurrentTime (vuecal) {
+      const calendar = document.querySelector(`${vuecal} .vuecal__bg`)
+      const hours = this.now.getHours() + this.now.getMinutes() / 60
+      calendar.scrollTo({ top: hours * this.timeCellHeight, behavior: 'smooth' })
+    },
+    scrollToTop (vuecal) {
+      const calendar = document.querySelector(`${vuecal} .vuecal__bg`)
+      calendar.scrollTo({ top: 0, behavior: 'smooth' })
+    },
     onEventClick (event, e) {
       this.selectedEvent = event
       this.showDialog = true
@@ -3791,16 +3876,21 @@ export default {
       return event
     },
     customEventCreation () {
-      const dateTime = prompt('Create event on (yyyy-mm-dd hh:mm)', '2018-11-20 13:15')
+      const dateTime = prompt('Create event on (YYYY-MM-DD HH:mm)', '2018-11-20 13:15')
       if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dateTime)) {
         this.$refs.vuecal.createEvent(dateTime, { title: 'New Event', content: 'yay! 🎉', classes: ['leisure'] })
       }
       else if (dateTime) alert('Wrong date format.')
+    },
+    overrideDateTexts () {
+      // In Vue Cal documentation Chinese texts are loaded last.
+      // Override Date texts with english for prototype formatting functions.
+      setTimeout(this.$refs.vuecal.updateDateTexts, 3000)
     }
   },
   computed: {
     nowFormatted () {
-      return Date.prototype.format && (new Date()).format('yyyy{mm}dd')
+      return Date.prototype.format && (new Date()).format('YYYY{MM}DD')
     },
     currentDateFormatted () {
       const y = this.now.getFullYear()
