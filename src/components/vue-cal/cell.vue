@@ -261,9 +261,7 @@ export default {
         // Also clone array to prevent modifying original.
         events = this.$parent.view.events.slice(0)
 
-        if (this.view === 'month') {
-          events.push(...this.$parent.view.outOfScopeEvents)
-        }
+        if (this.view === 'month') events.push(...this.$parent.view.outOfScopeEvents)
 
         // Only keep events in cell time range.
         events = events.filter(e => eventInRange(e, cellStart, cellEnd))
