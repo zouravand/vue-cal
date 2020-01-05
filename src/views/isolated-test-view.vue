@@ -1,14 +1,263 @@
 <template lang="pug">
 //- This is an isolated test view. Just for testing purpose.
-vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
-  selected-date="2018-11-19"
-  :time-from="8 * 60"
-  :time-to="23 * 60"
-  hide-weekends
-  events-count-on-year-view
-  editable-events
-  show-all-day-events
-  :events="recurringEvents")
+div
+  vue-cal.vuecal--green-theme.ex--recurring-events.vuecal--full-height-delete(
+    selected-date="2018-11-19"
+    :time-from="8 * 60"
+    :time-to="23 * 60"
+    events-count-on-year-view
+    editable-events
+    show-all-day-events
+    :events="recurringEvents")
+
+  br
+  br
+  h1 Todo
+  ul
+    li
+      h2.mt-5 Problems
+      div
+        label
+          input.mr-2(type="checkbox")
+          | Why only one all day event repetition shows up on the first week (week view) with repeat every day?
+      div
+        label
+          input.mr-2(type="checkbox")
+          | Why no event show up every January?
+      div
+        label
+          input.mr-2(type="checkbox")
+          | Why no event show up from 8th april to november when?
+      div
+        label
+          input.mr-2(type="checkbox")
+          | Annual recurring event on 29th of Feb should not show up in count on non leap years
+      div
+        label
+          input.mr-2(type="checkbox")
+          | On month view event counts don't appear on out of scope cells
+    li
+      h2.mt-5 Single day events
+      v-layout
+        div.mr-5
+          strong Normal
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every x day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every week day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every week
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every month
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every year
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | until
+          div
+            label
+              input.mr-2(type="checkbox")
+              | overlapping events with event repetition
+
+        div.mr-5
+          strong All day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every x day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every week day
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every week
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every month
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | every year
+          div
+            label
+              input.mr-2(type="checkbox" checked)
+              | until
+          div
+            label
+              input.mr-2(type="checkbox")
+              | overlapping events with event repetition
+
+    li
+      h2.mt-5 Multiple day events
+      v-layout
+        div.mr-5
+          strong Normal
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every x day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every week day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every week
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every month
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every year
+          div
+            label
+              input.mr-2(type="checkbox")
+              | until
+          div
+            label
+              input.mr-2(type="checkbox")
+              | overlapping events with event repetition
+
+        div.mr-5
+          strong All day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every x day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every week day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every week
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every month
+          div
+            label
+              input.mr-2(type="checkbox")
+              | every year
+          div
+            label
+              input.mr-2(type="checkbox")
+              | until
+          div
+            label
+              input.mr-2(type="checkbox")
+              | overlapping events with event repetition
+
+    li
+      h2.mt-5 Events count
+      v-layout
+        div.mr-5
+          strong Single day normal
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events on month view
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count month
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count year
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count years
+        div.mr-5
+          strong Single day all day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events on month view
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count month
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count year
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count years
+        div.mr-5
+          strong Multiple day normal
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events on month view
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count month
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count year
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count years
+        div.mr-5
+          strong Multiple day all day
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events on month view
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count month
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count year
+          div
+            label
+              input.mr-2(type="checkbox")
+              | Events count years
+
 </template>
 
 <script>
@@ -19,13 +268,6 @@ export default {
   components: { VueCal },
   data: () => ({
     selectedDate: now,
-    events: [
-      {
-        startDate: now.subtractDays(1),
-        endDate: now.addDays(1),
-        title: 'Event'
-      }
-    ],
     recurringEvents: [
       // @todo: repeat a single day background event the whole week. E.g. lunch.
       // {
@@ -41,20 +283,36 @@ export default {
       //     until: '2020-11-30'
       //   }
       // },
+
+      // To fix some multiple of 10 are skipped.
+      // {
+      //   start: '2018-11-19 08:00',
+      //   end: '2018-11-19 11:00',
+      //   title: 'Nightclub',
+      //   content: '<i class="v-icon material-icons">local_drink</i>',
+      //   class: 'leisure',
+      //   repeat: {
+      //     every: 10,
+      //     until: '2020-11-30'
+      //   }
+      // },
+
       {
-        start: '2018-11-19 22:00',
-        end: '2018-11-20 11:00',
+        // start: '2018-11-19 22:00',
+        // end: '2018-11-20 11:00',
+        start: '2018-11-19 08:00',
+        end: '2018-11-19 11:00',
         title: 'Nightclub',
         content: '<i class="v-icon material-icons">local_drink</i>',
         class: 'leisure',
+        allDay: true,
         repeat: {
-          every: 'day', // OK.
-          // every: 'week', // OK.
-          // every: 'month', // OK.
-          // every: 'year', // OK.
-          // every: 10, // OK.
-          // weekdays: [1, 4], // OK.
-          // weekdays: [2, 4],
+          // every: 'day',
+          // every: 'week',
+          // every: 'month',
+          // every: 'year',
+          every: 2,
+          // weekdays: [1, 4],
           until: '2020-11-30'
         }
       },
