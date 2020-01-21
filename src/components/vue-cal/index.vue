@@ -480,8 +480,9 @@ export default {
 
       console.log('adding events to view')
 
-      // First remove the events that are not in view and clear occurrences if any (recurring events).
-      events = events.filter(e => {
+      // First remove the events that are not in view.
+      // Keep the unfiltered array of events for outOfScopeEvents bellow.
+      let filteredEvents = events.filter(e => {
         // If there are any event occurrences - case of recurring events - delete them as we change view.
         delete e.occurrences
         return eventInRange(e, startDate, endDate)
@@ -490,12 +491,12 @@ export default {
       // For each multiple-day event and only if needed, create its segments (= days) for rendering in the view.
       // If we don't display the event on month view (eventsOnMonthView = false) then don't create segments.
       if (['month', 'week', 'day'].includes(id) && !(id === 'month' && !this.eventsOnMonthView)) {
-        events = events.map(e => {
+        filteredEvents = filteredEvents.map(e => {
           return e.daysCount > 1 ? createEventSegments(e, firstCellDate || startDate, lastCellDate || endDate) : e
         })
       }
 
-      this.view.events.push(...events)
+      this.view.events.push(...filteredEvents)
 
       if (id === 'month') {
         // Save out of scope events into the view object separated from the array of in-scope events.
