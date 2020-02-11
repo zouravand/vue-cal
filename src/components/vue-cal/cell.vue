@@ -20,6 +20,10 @@
       @click="!isDisabled && selectCell($event)"
       @dblclick="!isDisabled && onCellDblClick($event)"
       @contextmenu="!isDisabled && options.cellContextmenu && onCellContextMenu($event)")
+      .vuecal__special-hours(
+        v-if="isWeekOrDayView && specialHours.from !== null"
+        :class="`vuecal__special-hours--day${specialHours.day} ${specialHours.class}`"
+        :style="`height: ${specialHours.height}px;top: ${specialHours.top}px`")
       slot(
         name="cell-content"
         :events="events"
@@ -27,7 +31,7 @@
         :select-cell="$event => selectCell($event, true)"
         :split="splits.length ? split : false")
       .vuecal__cell-events(
-        v-if="eventsCount && (['week', 'day'].includes(view) || (view === 'month' && options.eventsOnMonthView))")
+        v-if="eventsCount && (isWeekOrDayView || (view === 'month' && options.eventsOnMonthView))")
         event(
           v-for="(event, j) in (splits.length ? split.events : events)" :key="j"
           :vuecal="$parent"
@@ -91,7 +95,7 @@ export default {
     },
 
     selectCell (DOMEvent, force = false) {
-      if (!this.selected) this.onCellFocus(DOMEvent)
+      if (!this.isSelected) this.onCellFocus(DOMEvent)
 
       // If splitting days, also return the clicked split on cell click when emitting event.
       let split
@@ -106,7 +110,7 @@ export default {
     },
 
     onCellkeyPressEnter (DOMEvent) {
-      if (!this.selected) this.onCellFocus(DOMEvent)
+      if (!this.isSelected) this.onCellFocus(DOMEvent)
 
       // If splitting days, also return the clicked split on cell click when emitting event.
       let split
@@ -126,8 +130,8 @@ export default {
      * if click/touch.
      */
     onCellFocus (DOMEvent) {
-      if (!this.selected) {
-        this.selected = this.data.startDate
+      if (!this.isSelected) {
+        this.isSelected = this.data.startDate
 
         // If splitting days, also return the clicked split on cell click when emitting event.
         let split
@@ -227,23 +231,12 @@ export default {
     isAfterMaxDate () {
       return this.maxTimestamp && this.maxTimestamp < this.data.startDate.getTime()
     },
+    // Is the current cell disabled or not.
     isDisabled () {
       return this.isBeforeMinDate || this.isAfterMaxDate
     },
-    cssClasses () {
-      return {
-        'vuecal__cell--has-splits': this.splits.length,
-        'vuecal__cell--has-events': this.eventsCount,
-        current: this.data.current,
-        today: this.data.today,
-        'out-of-scope': this.data.outOfScope,
-        disabled: this.isDisabled,
-        'before-min': this.isDisabled && this.isBeforeMinDate,
-        'after-max': this.isDisabled && this.isAfterMaxDate,
-        selected: this.selected
-      }
-    },
-    selected: {
+    // Is the current cell selected or not.
+    isSelected: {
       get () {
         let selected = false
         const { selectedDate } = this.$parent.view
@@ -277,13 +270,21 @@ export default {
     view () {
       return this.$parent.view.id
     },
+    // Cache result for performance.
+    isWeekOrDayView () {
+      return ['week', 'day'].includes(this.view)
+    },
     transitionDirection () {
       return this.$parent.transitionDirection
     },
-    cellStyles () {
+    specialHours () {
+      let { from, to } = this.data.specialHours
+      from = Math.max(from, this.options.timeFrom)
+      to = Math.min(to, this.options.timeTo)
       return {
-        // cellWidth is only applied when hiding weekdays on month and week views.
-        ...(this.cellWidth ? { width: `${this.cellWidth}%` } : {})
+        ...this.data.specialHours,
+        height: (to - from) * this.timeScale,
+        top: (from - this.options.timeFrom) * this.timeScale
       }
     },
     events () {
@@ -304,7 +305,7 @@ export default {
         if (this.options.showAllDayEvents && this.view !== 'month') events = events.filter(e => !!e.allDay === this.allDay)
 
         // From events in view, filter the ones that are out of `time-from`-`time-to` range in this cell.
-        if (this.options.time && ['week', 'day'].includes(this.view) && !this.allDay) {
+        if (this.options.time && this.isWeekOrDayView && !this.allDay) {
           const { timeFrom, timeTo } = this.options
 
           events = events.filter(e => {
@@ -317,7 +318,7 @@ export default {
         }
 
         // Position events with time in the timeline when there is a timeline and not in allDay slot.
-        if (this.options.time && ['week', 'day'].includes(this.view) && !(this.options.showAllDayEvents && this.allDay)) {
+        if (this.options.time && this.isWeekOrDayView && !(this.options.showAllDayEvents && this.allDay)) {
           events.forEach(event => {
             // all-day events are positionned via css: top-0 & bottom-0.
             // So they behave as background events if not in allDay slot.
@@ -364,8 +365,27 @@ export default {
         }
       })
     },
+    cssClasses () {
+      return {
+        'vuecal__cell--has-splits': this.splits.length,
+        'vuecal__cell--has-events': this.eventsCount,
+        current: this.data.current,
+        today: this.data.today,
+        'out-of-scope': this.data.outOfScope,
+        disabled: this.isDisabled,
+        'before-min': this.isDisabled && this.isBeforeMinDate,
+        'after-max': this.isDisabled && this.isAfterMaxDate,
+        selected: this.isSelected
+      }
+    },
+    cellStyles () {
+      return {
+        // cellWidth is only applied when hiding weekdays on month and week views.
+        ...(this.cellWidth ? { width: `${this.cellWidth}%` } : {})
+      }
+    },
     timelineVisible () {
-      if (!this.data.today || !this.options.time || this.allDay || !['week', 'day'].includes(this.view)) return
+      if (!this.data.today || !this.options.time || this.allDay || !this.isWeekOrDayView) return
 
       return (this.$parent.now.getHours() * 60 + this.$parent.now.getMinutes()) <= this.options.timeTo
     },
@@ -375,7 +395,10 @@ export default {
 
       const startTimeMinutes = this.$parent.now.getHours() * 60 + this.$parent.now.getMinutes()
       const minutesFromTop = startTimeMinutes - this.options.timeFrom
-      return Math.round(minutesFromTop * this.options.timeCellHeight / this.options.timeStep)
+      return Math.round(minutesFromTop * this.timeScale)
+    },
+    timeScale () {
+      return this.options.timeCellHeight / this.options.timeStep
     }
   }
 }
@@ -413,6 +436,12 @@ export default {
   &.vuecal__cell--has-splits {
     flex-direction: row;
     display: flex;
+  }
+
+  .vuecal__special-hours {
+    position: absolute;
+    left: 0;
+    right: 0;
   }
 
   &-content {
