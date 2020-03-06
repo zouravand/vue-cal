@@ -10,22 +10,26 @@
   @touchstart.stop="onTouchStart"
   @mousedown="onMouseDown($event) /* Don't stop mousedown propagation & trigger cell mousedown */"
   @click="onClick"
-  @dblclick="onDblClick")
+  @dblclick="onDblClick"
+  :draggable="vuecal.editableEvents && event.draggable && !event.background"
+  @dragstart="vuecal.editableEvents && event.draggable && !event.background && onDragStart($event)"
+  @dragend="vuecal.editableEvents && event.draggable && !event.background && onDragEnd($event)")
   .vuecal__event-delete(
     v-if="vuecal.editableEvents && event.deletable"
-    @mousedown.stop="deleteEvent"
+    @click.stop="deleteEvent"
     @touchstart.stop="touchDeleteEvent") {{ vuecal.texts.deleteEvent }}
-  slot(name="event-renderer" :event="event" :view="vuecal.view.id")
+  slot(name="event" :event="event" :view="vuecal.view.id")
   //- Force contenteditable="false" for new events without content.
   .vuecal__event-resize-handle(
     v-if="resizable"
     contenteditable="false"
-    @mousedown="onDragHandleMouseDown"
-    @touchstart="onDragHandleMouseDown")
+    @mousedown.stop.prevent="onDragHandleMouseDown"
+    @touchstart.stop.prevent="onDragHandleMouseDown")
 </template>
 
 <script>
 import { deleteAnEvent } from './event-utils'
+import { eventDragStart, eventDragEnd } from './drag-and-drop'
 
 export default {
   props: {
@@ -44,7 +48,7 @@ export default {
     onMouseDown (e, touch = false) {
       // Prevent a double mouse down on touch devices.
       if ('ontouchstart' in window && !touch) return false
-      const { clickHoldAnEvent, resizeAnEvent, focusAnEvent } = this.domEvents
+      const { clickHoldAnEvent, focusAnEvent, resizeAnEvent, dragAnEvent } = this.domEvents
 
       // If the delete button is already out and event is on focus then delete event.
       if (focusAnEvent._eid === this.event._eid && clickHoldAnEvent._eid === this.event._eid) {
@@ -56,11 +60,13 @@ export default {
 
       clickHoldAnEvent._eid = null // Reinit click hold on each click.
 
-      // Show event delete button - only if not dragging.
-      if (!resizeAnEvent._eid && this.vuecal.editableEvents) {
+      // Show event delete button.
+      if (this.vuecal.editableEvents) {
         clickHoldAnEvent.timeoutId = setTimeout(() => {
-          clickHoldAnEvent._eid = this.event._eid
-          this.event.deleting = true
+          if (!resizeAnEvent._eid && !dragAnEvent._eid) {
+            clickHoldAnEvent._eid = this.event._eid
+            this.event.deleting = true
+          }
         }, clickHoldAnEvent.timeout)
       }
     },
@@ -76,6 +82,11 @@ export default {
     },
 
     onTouchStart (e) {
+      // Prevent the text selection prompt on touch device if editable events - unless on title.
+      // So the delete button will show up nicely without the text prompt.
+      if (this.vuecal.editableEvents && !e.target.className.includes('vuecal__event-title')) {
+        e.returnValue = false
+      }
       this.onMouseDown(e, true)
     },
 
@@ -87,7 +98,16 @@ export default {
       if (typeof this.vuecal.onEventDblclick === 'function') return this.vuecal.onEventDblclick(this.event, e)
     },
 
+    onDragStart (e) {
+      eventDragStart(e, this.event, this.vuecal)
+    },
+
+    onDragEnd (e) {
+      eventDragEnd(e, this.event, this.vuecal)
+    },
+
     onDragHandleMouseDown () {
+      this.domEvents.dragAnEvent._eid = null
       this.domEvents.resizeAnEvent = Object.assign(this.domEvents.resizeAnEvent, {
         _eid: this.event._eid,
         start: (this.segment || this.event).start,
@@ -152,7 +172,7 @@ export default {
         top: `${(this.segment || this.event).top}px`,
         height: `${(this.segment || this.event).height}px`,
         width: `${width}%`,
-        left: `${left}%`
+        left: (this.event.left && `${this.event.left}px`) || `${left}%`
       }
     },
 
@@ -161,12 +181,18 @@ export default {
       const { isFirstDay, isLastDay } = this.segment || {}
 
       return {
-        [this.event.classes.join(' ')]: true,
+        [this.event.class]: true,
         'vuecal__event--focus': this.event.focused,
         'vuecal__event--resizing': this.event.resizing,
         'vuecal__event--background': this.event.background,
         'vuecal__event--deletable': this.event.deleting,
         'vuecal__event--all-day': this.event.allDay,
+        // Only apply the dragging class on the event copy that is being dragged.
+        'vuecal__event--dragging': !this.event.draggingStatic && this.event.dragging,
+        // Only apply the static class on the event original that remains static while a copy is being dragged.
+        // Sometimes when dragging fast the static class would get stuck and events stays invisible,
+        // So if dragging is false disable the static class as well.
+        'vuecal__event--static': this.event.dragging && this.event.draggingStatic,
         // Multiple days events.
         'vuecal__event--multiple-days': !!this.segment,
         'event-start': this.segment && isFirstDay && !isLastDay,
@@ -230,6 +256,14 @@ export default {
 
   &--background {z-index: 0;}
   &--focus, &:focus {box-shadow: 1px 1px 6px rgba(0,0,0,0.2);z-index: 3;outline: none;}
+
+  &.vuecal__event--dragging {opacity: 0.7;}
+  &.vuecal__event--static {opacity: 0;transition: opacity 0.1s;}
+}
+
+// Firefox sets a half opacity already, so don't dim the element being dragged.
+@-moz-document url-prefix() {
+  .vuecal__event.vuecal__event--dragging {opacity: 1;}
 }
 
 .vuecal__event-resize-handle {
@@ -247,6 +281,7 @@ export default {
   .vuecal__event:hover &,
   .vuecal__event:focus &,
   .vuecal__event--focus & {opacity: 1;transform: translateY(0);}
+  .vuecal__event--dragging & {display: none;}
 }
 
 .vuecal__event-delete {
@@ -266,6 +301,7 @@ export default {
   cursor: pointer;
   transform: translateY(-110%);
   transition: 0.3s;
+  .vuecal__event & {user-select: none;}
 
   .vuecal--full-height-delete & {
     height: auto;
@@ -280,6 +316,10 @@ export default {
     }
   }
   .vuecal__event--deletable & {transform: translateY(0);z-index: 1;}
+  .vuecal__event--deletable.vuecal__event--dragging & {
+    opacity: 0;
+    transition: none;
+  }
 }
 
 .vuecal--month-view .vuecal__event-title {
