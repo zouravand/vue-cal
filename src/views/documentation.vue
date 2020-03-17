@@ -148,7 +148,13 @@
       | Drag &amp; drop events
     v-chip.ma-1.pl-0.pr-1(color="amber darken-1" outlined small)
       v-icon.mr-1(size="20") timer
+      | Drop external events into Vue Cal
+    v-chip.ma-1.pl-0.pr-1(color="amber darken-1" outlined small)
+      v-icon.mr-1(size="20") timer
       | Recurring events
+    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
+      v-icon.mr-1(size="20") access_time
+      | Drag &amp; drop multiple day events
     v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
       v-icon.mr-1(size="20") access_time
       | Drag &amp; drop events on touch devices
@@ -205,7 +211,7 @@
   h2.headline.mt-12.pt-12
     a(href="#installation") Installation
     a#installation(name="installation")
-  strong.black--text Vue.js 2.6.1 or later is required.
+  strong.black--text Vue.js 2.6.7 or later is required.
   p.mt-2 You have 2 options: using NPM or #[span.code &lt;script&gt;] tag.
   h3.mt-8 Via NPM
   sshpre.mt-2(language="shell" label="Shell") npm i --S vue-cal
@@ -1114,11 +1120,124 @@
              class="vuecal--full-height-delete"&gt;
     &lt;/vue-cal&gt;
   sshpre(language="css" label="CSS").
-    .vuecal__event--dragging {
-      background-color: rgba(60, 60, 60, 0.3);
-      border: none;
-    }
+    .vuecal__event--dragging {background-color: rgba(60, 60, 60, 0.3);}
 
+  //- Example.
+  h4.title
+    a(href="#ex--external-events-drag-and-drop") # External events drag &amp; drop
+    v-chip.ml-3.px-2(color="error" small outlined) Not available on touch devices for now
+    a#ex--external-events-drag-and-drop(name="ex--external-events-drag-and-drop")
+  p.mb-2.
+    You can drag &amp; drop events from an external source as long as they are HTML5 draggable (this will change when touch devices are supported).#[br]
+    It is also possible to move an event from one calendar to another.#[br]#[br]
+    In the external event, you can set a #[span.code duration] property: it will be used to represent the duration of the event on Vue Cal when it has no date.#[br]
+    If the #[span.code duration] is missing, the default will be 2 hours.
+
+  highlight-message(type="tips")
+    strong Important note when dragging external events into Vue Cal:
+    div.
+      With HTML5 drag &amp; drop, when you drop a DOM element to another location, you have to move
+      the element yourself. Now especially because Vue is data driven and a DOM update does not
+      modify the data, you will also have to remove the event from its original data source yourself
+      - unless you want to create a copy.#[br]
+      Learn how in the example source code bellow.
+  v-layout.mt-4(wrap)
+    div.mr-2
+      .external-event(
+        v-for="(item, i) in draggables"
+        :key="i"
+        draggable="true"
+        @dragstart="onEventDragStart($event, item)")
+          strong.mr-2 {{ item.title }}
+          span ({{ item.duration ? `${item.duration} min` : 'no duration' }})
+          div {{ item.content }}
+    vue-cal.mr-1.flex.external-events-drag-and-drop.vuecal--blue-theme(
+      small
+      hide-view-selector
+      hide-weekends
+      :disable-views="['years', 'year', 'month', 'day']"
+      :time-from="9 * 60"
+      :time-to="16 * 60"
+      editable-events
+      @event-drop="onEventDrop")
+    vue-cal.ml-1.flex.external-events-drag-and-drop.vuecal--green-theme(
+      small
+      hide-view-selector
+      hide-weekends
+      :disable-views="['years', 'year', 'month', 'day']"
+      :time-from="9 * 60"
+      :time-to="16 * 60"
+      editable-events
+      @event-drop="onEventDrop")
+
+  sshpre(language="html-vue" label="Vue Template").
+    &lt;!-- Three HTML5 draggable events. --&gt;
+    &lt;div class="external-event"
+         v-for="(item, i) in draggables"
+         :key="i"
+         draggable="true"
+         @dragstart="onEventDragStart($event, item)"&gt;
+         &lt;strong&gt;{{ '\{\{ item.title \}\}' }}&lt;/strong&gt;
+         ({{ "\{\{ item.duration ? `${item.duration} min` : 'no duration' \}\}" }})
+      &lt;div&gt;{{ '\{\{ item.content \}\}' }}&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;vue-cal small
+             hide-view-selector
+             hide-weekends
+             :disable-views="['years', 'year', 'month', 'day']"
+             :time-from="9 * 60"
+             :time-to="16 * 60"
+             editable-events
+             @event-drop="onEventDrop"&gt;
+    &lt;/vue-cal&gt;
+  sshpre(language="js" label="Javascript - Vue Component").
+    export default {
+      data: () => ({
+        draggables: [
+          {
+            // The id (or however you name it), will help you find which event to delete
+            // from the callback triggered on drop into Vue Cal.
+            id: 1,
+            title: 'Ext. Event 1',
+            content: 'content 1',
+            duration: 60
+          },
+          {
+            id: 2,
+            title: 'Ext. Event 2',
+            content: 'content 2',
+            duration: 30
+          },
+          {
+            id: 3,
+            title: 'Ext. Event 3',
+            content: 'content 3'
+            // No defined duration here: will default to 2 hours.
+          }
+        ]
+      }),
+      methods: {
+        onEventDragStart (e, draggable) {
+          // Passing the event's data to Vue Cal through the DataTransfer object.
+          e.dataTransfer.setData('event', JSON.stringify(draggable))
+          e.dataTransfer.setData('cursor-grab-at', e.offsetY)
+        },
+        // The 3 parameters are destructured from the passed $event in @event-drop="onEventDrop".
+        // `event` is the final event as Vue Cal understands it.
+        // `originalEvent` is the event that was dragged into Vue Cal, it can come from the same
+        //  Vue Cal instance, another one, or an external source.
+        // `external` is a boolean that lets you know if the event is not coming from any Vue Cal.
+        onEventDrop ({ event, originalEvent, external }) {
+          // If the event is external, delete it from the data source on drop into Vue Cal.
+          // If the event comes from another Vue Cal instance, it will be deleted automatically in there.
+          if (external) {
+            const extEventToDeletePos = this.draggables.findIndex(item => item.id === originalEvent.id)
+            if (extEventToDeletePos > -1) this.draggables.splice(extEventToDeletePos, 1)
+          }
+        }
+      }
+    }
   //- Example.
   h4.title
     a(href="#ex--more-advanced-event-creation") # More advanced event creation
@@ -1153,7 +1272,7 @@
             :cell-click-hold="false"
             editable-events
             :events="events"
-            @cell-dblclick="$refs.vuecal3.createEvent($event, { title: 'New Event', class: 'blue-event' })")
+            @cell-dblclick="$refs.vuecal3.createEvent($event, 120, { title: 'New Event', class: 'blue-event' })")
         sshpre.my-2(language="html-vue" style="font-size: 0.8em").
           &lt;vue-cal
             ref="vuecal"
@@ -1170,6 +1289,7 @@
             :events="events"
             @cell-dblclick="$refs.vuecal.createEvent(
               $event,
+              120,
               { title: 'New Event', class: 'blue-event' }
             )"&gt;
           &lt;/vue-cal&gt;
@@ -1226,16 +1346,13 @@
               this.$refs.vuecal.createEvent(
                 // Formatted start date and time or JavaScript Date object.
                 dateTime,
+                // Event duration in minutes (Integer).
+                120,
                 // Custom event props (optional).
-                { title: 'New Event', content: 'yay! 🎉', classes: ['leisure'] }
+                { title: 'New Event', content: 'yay! 🎉', class: 'blue-event' }
               )
             } else if (dateTime) alert('Wrong date format.')
         }
-      highlight-message(type="warning").
-        Note that you can also override the default end date (2 hours duration),
-        by setting the property #[span.code end], but for internal Vue Cal calculations
-        #[strong you will also need to set the property #[span.code endTimeMinutes]].#[br]
-        E.g. #[span.code { end: '2018-11-20 14:00', endTimeMinutes: 14 * 60 }].
 
     li.mt-12
       h5.subtitle-1.font-weight-bold Adding a dialog box to the default #[strong cell click &amp; hold] behavior
@@ -1310,7 +1427,8 @@
               &lt;v-select
                 :items="eventsCssClasses"
                 placeholder="Event CSS Class"
-                @change="selectedEvent.class = $event"/&gt;
+                @change="selectedEvent.class = $event"
+                :value="selectedEvent.class"/&gt;
               &lt;v-switch v-model="selectedEvent.background" label="background Event"/&gt;
             &lt;/v-layout&gt;
             &lt;v-layout&gt;
@@ -3381,25 +3499,42 @@
   div
     strong Version 3.0
     v-chip.ml-2.px-2(small outlined color="error") ALPHA VERSION
-    highlight-message.mb-0.py-4(type="success" no-icon)
-      h3.mt-0.pt-0 The arrival of the drag &amp; drop feature marks a new milestone for Vue Cal!
-      p.mb-0.
-        Many subsequent features to come, progressively building the most intuitive full-featured and flexible calendar
-        on Vue.js, 100% designed for Vue, and still with no dependency!#[br]
+    h3.mt-0.pt-0 The arrival of the drag &amp; drop feature marks a new milestone for Vue Cal!
+    p.mb-0.
+      Many subsequent features to come, progressively building the most intuitive full-featured and flexible calendar
+      on Vue.js, 100% designed for Vue, and still with no dependency!
+    highlight-message.mb-0(type="warning")
+      h3.mt-0.pt-0 Like the native HTML5 drag &amp; drop it's built with, Vue Cal's drag &amp; drop is not available on touch screens
+      p Vue Cal will support touch screen drag &amp; drop later on, using an alternative technology.
 
-    highlight-message.mb-6(type="warning")
+    highlight-message.mb-6(type="success")
+      h3.mt-0.pt-0 New Features
       ul
         li
-          h3.mt-0.pt-0 Like the native HTML5 drag &amp; drop it's built with, Vue Cal's drag &amp; drop is not available on touch screens
-          p Vue Cal will support touch screen drag &amp; drop later on, using an alternative technology.
+          h4.mt-2.pt-0 Drag &amp; drop
         li
-          h3.mt-3.pt-0 The drag &amp; drop features comes along with a #[span.code snapToTime] option on event drop and event resize
+          h4.mt-0 Drop an external (HTML5 draggable) event into Vue Cal or between 2 Vue Cal instances
+        li
+          h4.mt-0 #[span.code snapToTime] option on event drop and event resize
           p Refer to the #[span.code snapToTime] option in the #[a(href="#api") API section].#[br]
+      h3.mt-0.mb-2 Big changes
+      ul
+        li.
+          Vue Cal's createEvent() function now accepts a duration parameter to easily override
+          the default 2 hours. (ref. #[a(href="#ex--more-advanced-event-creation") More advanced event creation] example)
+        li.
+          The internal event #[span.code classes] property is replaced with
+          #[span.code class] like in the external event definition. Now you can
+          keep updating the #[span.code class] property from your component methods
+          called from Vue Cal fired events.
         li
-          h3.mt-3.pt-0 Renamed slot
+          h4.mt-3.pt-0 Renamed slot
           p The #[span.code event-renderer] slot is renamed into #[span.code event]
+      h3.mt-0.mb-2 Other noticeable changes
+      ul
+        li When creating an event with a given endDate, automatically add the required endTimeMinutes.
         li
-          h3.mt-3.pt-0 Renamed CSS classes
+          h4.mt-3.pt-0 Renamed CSS classes
           p.
             If you use them in your own CSS (or if you have a custom color theme)
             you might want to update them:#[br]
@@ -3419,28 +3554,20 @@
             li #[span.code .active] becomes #[span.code .vuecal__view-btn--active]
 
         li
-          h3.mt-0 New CSS classes when an event is dragged
+          h4.mt-0 New CSS classes when an event is dragged
           ul
             li Over a cell: #[span.code .vuecal__cell--highlighted]
             li Over a menu arrow (previous &amp; next): #[span.code .vuecal__arrow--highlighted]
             li Over a menu view button: #[span.code .vuecal__view-btn--highlighted]
             li Event dragging class: #[span.code .vuecal__event-dragging]
         li
-          h3.mt-0 Updated color theme
+          h4.mt-0 Updated color theme
           p.
             If you have a custom color theme, these new classes should be added:
             #[span.code .vuecal__view-btn--highlighted],
             #[span.code .vuecal__arrow--highlighted],
             #[span.code .vuecal__cell--highlighted].#[br]
             Refer to the #[a(href="#css-notes") CSS Notes].
-        li
-          h3.mt-0 Other changes
-          ul
-            li.
-              The internal event #[span.code classes] property is replaced with
-              #[span.code class] like in the external event definition. Now you can
-              keep updating the #[span.code class] property from your component methods
-              called from Vue Cal fired events.
 
   div.grey--text #[strong Version 2.24.4] Fire `event-focus` only once, always return a date from `cell-click`
   div.grey--text #[strong Version 2.24.3] Fix the all-day bar label cell horizontal alignment
@@ -3755,10 +3882,11 @@
             :items="eventsCssClasses"
             placeholder="Event CSS Class"
             @change="selectedEvent.class = $event"
+            :value="selectedEvent.class"
             hide-details
             style="max-width: 170px")
-          v-switch.flex.shrink(v-model="selectedEvent.background" label="background Event" color="primary")
-        v-layout
+          v-switch.flex.shrink(v-model="selectedEvent.background" label="Background Event" color="primary")
+        v-layout.mt-2
           v-spacer
           v-btn.ma-1(small @click="cancelEventCreation()") Cancel
           v-btn.ma-1(small color="primary" @click="closeCreationDialog()") Save
@@ -4233,6 +4361,25 @@ export default {
         class: 'sport'
       }
     ],
+    draggables: [
+      {
+        id: 1,
+        title: 'Ext. Event 1',
+        content: 'content 1',
+        duration: 60
+      },
+      {
+        id: 2,
+        title: 'Ext. Event 2',
+        content: 'content 2',
+        duration: 30
+      },
+      {
+        id: 3,
+        title: 'Ext. Event 3',
+        content: 'content 3'
+      }
+    ],
     deleteEventFunction: null
   }),
 
@@ -4278,7 +4425,7 @@ export default {
     customEventCreation () {
       const dateTime = prompt('Create event on (YYYY-MM-DD HH:mm)', '2018-11-20 13:15')
       if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dateTime)) {
-        this.$refs.vuecal.createEvent(dateTime, { title: 'New Event', content: 'yay! 🎉', classes: ['leisure'] })
+        this.$refs.vuecal.createEvent(dateTime, 120, { title: 'New Event', content: 'yay! 🎉', class: 'blue-event' })
       }
       else if (dateTime) alert('Wrong date format.')
     },
@@ -4286,6 +4433,16 @@ export default {
       // In Vue Cal documentation Chinese texts are loaded last.
       // Override Date texts with english for prototype formatting functions.
       setTimeout(this.$refs.vuecal.updateDateTexts, 3000)
+    },
+    onEventDragStart (e, draggable) {
+      e.dataTransfer.setData('event', JSON.stringify(draggable))
+      e.dataTransfer.setData('cursor-grab-at', e.offsetY)
+    },
+    onEventDrop ({ event, originalEvent, external }) {
+      if (external) {
+        const extEventToDeletePos = this.draggables.findIndex(item => item.id === originalEvent.id)
+        if (extEventToDeletePos > -1) this.draggables.splice(extEventToDeletePos, 1)
+      }
     }
   },
 
@@ -4297,12 +4454,7 @@ export default {
       return Date.prototype.format && (new Date()).format('YYYY{MM}DD')
     },
     currentDateFormatted () {
-      const y = this.now.getFullYear()
-      const m = this.now.getMonth()
-      const d = this.now.getDate()
-      const h = this.now.getHours()
-      const min = this.now.getMinutes()
-      return `${y}-${(m < 10 ? '0' : '') + m}-${(d < 10 ? '0' : '') + d} ${(h < 10 ? '0' : '') + h}:${(min < 10 ? '0' : '') + min}`
+      return `${this.now.format()} ${this.now.formatTime()}`
     },
     minDate () {
       return new Date().subtractDays(15)
@@ -4351,19 +4503,9 @@ $primary: #42b983;
 
   h4 {margin: 70px 0 8px;}
   h3 + h4 {margin-top: 20px;}
-
   h4 a {color: inherit !important;}
 
-  .todo .v-chip__content {
-    padding: 0 3px;
-  }
-
-  .flame {
-    max-width: 90px;
-    opacity: 0.6;
-    color: rgb(254, 247, 176);
-    text-shadow: 1px 0 0 #fd0, -1px 0 0 #fd0, 0 1px 0 #fd0, 0 -1px 0 #fd0;
-  }
+  .todo .v-chip__content {padding: 0 3px;}
 
   .api-options {list-style-type: none;}
   .api-options > li {margin-top: 2em;}
@@ -4385,6 +4527,7 @@ $primary: #42b983;
   background-color: rgba(grey, 0.3) !important;
   border: none !important;
 }
+
 .vuecal__event-title {font-weight: bold;}
 
 .ex--min-max-dates {
@@ -4421,6 +4564,26 @@ $primary: #42b983;
   .vuecal__cell .vuecal__cell-content {height: 100%;}
 
   .vuecal__no-event {padding-top: 3em;}
+}
+
+// External events drag and drop example.
+.external-events-drag-and-drop {
+  flex-basis: 0 !important;
+  min-width: 285px;
+}
+.external-events-drag-and-drop .vuecal__event, .external-event {
+  background-color: rgba(160, 220, 255, 0.5);
+  border: 1px solid rgba(0, 100, 150, 0.15);
+  padding: 0.2em 0.4em;
+  cursor: move;
+  cursor: grab;
+}
+
+.external-event {
+  margin-bottom: 0.5em;
+  width: 12.5em;
+
+  span {color: #777;font-size: 0.9em;}
 }
 
 // Today-current-time example.

@@ -128,7 +128,7 @@
 </template>
 
 <script>
-import { updateDateTexts, getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, stringToDate, countDays } from './date-utils'
+import { updateDateTexts, getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, formatTimeLite, stringToDate, countDays, dateToMinutes } from './date-utils'
 import { eventDefaults, createAnEvent, createEventSegments, addEventSegment, removeEventSegment, eventInRange } from './event-utils'
 import Header from './header'
 import WeekdaysHeadings from './weekdays-headings'
@@ -245,8 +245,8 @@ export default {
         endCell: null
       },
       dragAnEvent: {
-        _eid: null, // Only one at a time.
-        cursorGrabAt: 0 // The cursor position (in minutes) in the event.
+        // Only one at a time, only needed for vuecal dragging-event class.
+        _eid: null
       },
       focusAnEvent: {
         _eid: null // Only one at a time.
@@ -584,7 +584,7 @@ export default {
           event.endTimeMinutes === minutesInADay ? -1 : 0, // Remove 1 second if time is 24:00.
           0
         )
-        event.end = formatDateLite(event.endDate) + ' ' + formatTime(event.endTimeMinutes)
+        event.end = `${formatDateLite(event.endDate)} ${formatTimeLite(event.endDate)}`
 
         // Resize events horizontally if resize-x is enabled (add/remove segments).
         if (this.resizeX && this.view.id === 'week') {
@@ -740,42 +740,32 @@ export default {
       // Populate missing keys: start, startDate, startTimeMinutes, end, endDate, endTimeMinutes, daysCount.
       // Lots of these variables may look redundant but are here for performance as a cached result of calculation. :)
       this.events.forEach(event => {
-        // `event.start` accepts a formatted string - `event.startDate` accepts a Date object.
-        let startDate, startDateF, startTime, hoursStart, minutesStart
-        if (event.start) {
-          // eslint-disable-next-line
-          !([startDateF, startTime = ''] = event.start.split(' '))
-          // eslint-disable-next-line
-          !([hoursStart, minutesStart] = startTime.split(':'))
-          startDate = stringToDate(event.start)
-        }
-        else if (event.startDate && event.startDate instanceof Date) {
-          startDateF = formatDateLite(event.startDate)
-          hoursStart = event.startDate.getHours()
-          minutesStart = event.startDate.getMinutes()
+        // `event.startDate` accepts a Date object, and `event.start` accepts a formatted string.
+        let startDate, startDateF
+        if (event.startDate && event.startDate instanceof Date) {
           startDate = event.startDate
+          startDateF = formatDateLite(event.startDate)
         }
-        const startTimeMinutes = parseInt(hoursStart) * 60 + parseInt(minutesStart)
-        const start = event.start || startDateF + ' ' + formatTime(startTimeMinutes)
+        else if (event.start) {
+          startDate = stringToDate(event.start)
+          startDateF = event.start.split(' ')[0] // Isolate date without time.
+        }
+        const startTimeMinutes = dateToMinutes(startDate)
+        const start = event.start || `${startDateF} ${formatTimeLite(startDate)}`
 
-        // `event.end` accepts a formatted string - `event.endDate` accepts a Date object.
-        let endDate, endDateF, endTime, hoursEnd, minutesEnd
-        if (event.end) {
-          // eslint-disable-next-line
-          !([endDateF, endTime = ''] = event.end.split(' '))
-          // eslint-disable-next-line
-          !([hoursEnd, minutesEnd] = endTime.split(':'))
-          endDate = stringToDate(event.end)
-        }
-        else if (event.endDate && event.endDate instanceof Date) {
-          endDateF = formatDateLite(event.endDate)
-          hoursEnd = event.endDate.getHours()
-          minutesEnd = event.endDate.getMinutes()
+        // `event.endDate` accepts a Date object, and`event.end` accepts a formatted string.
+        let endDate, endDateF
+        if (event.endDate && event.endDate instanceof Date) {
           endDate = event.endDate
+          endDateF = formatDateLite(event.endDate)
+        }
+        else if (event.end) {
+          endDate = stringToDate(event.end)
+          endDateF = event.end.split(' ')[0] // Isolate date without time.
         }
 
-        let endTimeMinutes = parseInt(hoursEnd) * 60 + parseInt(minutesEnd)
-        const end = event.end || endDateF + ' ' + formatTime(endTimeMinutes)
+        let endTimeMinutes = dateToMinutes(endDate)
+        const end = event.end || `${endDateF} ${formatTimeLite(endDate)}`
 
         // Correct the common practice to end at 00:00 or 24:00 to count a full day.
         if (!endTimeMinutes || endTimeMinutes === minutesInADay) {
@@ -843,12 +833,13 @@ export default {
      * Notes: Event duration is by default 2 hours. You can override the event end through eventOptions.
      *
      * @param {String | Date} dateTime date & time at which the event will start.
+     * @param {Number} duration the event duration in minutes.
      * @param {Object} eventOptions an object of options to override the event creation defaults.
      *                              (can be any key allowed in an event object)
      * @return {Object} the created event.
      */
-    createEvent (dateTime, eventOptions = {}) {
-      return createAnEvent(dateTime, eventOptions, this)
+    createEvent (dateTime, duration, eventOptions = {}) {
+      return createAnEvent(dateTime, duration, eventOptions, this)
     },
 
     /**
@@ -970,6 +961,7 @@ export default {
     },
 
     /**
+     * Updates the localized texts in use in the Date prototypes. (E.g. new Date().format())
      * Callable from outside of Vue Cal.
      */
     updateDateTexts () {
@@ -1004,7 +996,7 @@ export default {
   created () {
     this.loadLocale(this.locale)
 
-    updateDateTexts(this.texts)
+    this.updateDateTexts()
 
     // Init the array of events, then keep listening for changes in watcher.
     this.updateMutableEvents(this.events)
@@ -1158,12 +1150,12 @@ export default {
     // Prepare the special hours object once for all at root level and not in cell.
     specialDayHours () {
       return Array(7).fill('').map((cell, i) => {
-        const specialHours = this.specialHours[i + 1] || {}
+        const { from, to, class: Class } = this.specialHours[i + 1] || {}
         return {
           day: i + 1,
-          from: specialHours.from * 1 || null,
-          to: specialHours.to * 1 || null,
-          class: specialHours.class || ''
+          from: ![null, undefined].includes(from) ? from * 1 : null,
+          to: ![null, undefined].includes(to) ? to * 1 : null,
+          class: Class || ''
         }
       })
     },

@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { formatDateLite, stringToDate, formatTime, countDays, datesInSameTimeStep } from './date-utils'
+import { formatDateLite, stringToDate, formatTime, formatTimeLite, countDays, datesInSameTimeStep, dateToMinutes } from './date-utils'
 
 const defaultEventDuration = 2 // In hours.
 const minutesInADay = 24 * 60 // Don't do the maths every time.
@@ -41,23 +41,22 @@ export const eventDefaults = {
  * event attributes through the eventOptions object.
  *
  * @param {Date | String} dateTime The date and time of the new event start.
+ * @param {Number} duration the event duration in minutes.
  * @param {Object} eventOptions some options to override the `eventDefaults` - optional.
  * @param {Object} vuecal the vuecal main component, to access needed methods, props, etc.
  */
-export const createAnEvent = (dateTime, eventOptions, vuecal) => {
+export const createAnEvent = (dateTime, duration, eventOptions, vuecal) => {
   if (typeof dateTime === 'string') dateTime = stringToDate(dateTime)
   if (!(dateTime instanceof Date)) return false
 
-  const hours = dateTime.getHours()
-  const minutes = dateTime.getMinutes()
-  const startTimeMinutes = hours * 60 + minutes
-  const hoursEnd = hours + defaultEventDuration
-  const endTimeMinutes = startTimeMinutes + 120
-  const formattedHours = (hours < 10 ? '0' : '') + hours
-  const formattedHoursEnd = (hoursEnd < 10 ? '0' : '') + hoursEnd
-  const formattedMinutes = (minutes < 10 ? '0' : '') + minutes
-  const start = formatDateLite(dateTime) + (vuecal.time ? ` ${formattedHours}:${formattedMinutes}` : '')
-  const end = formatDateLite(dateTime) + (vuecal.time ? ` ${formattedHoursEnd}:${formattedMinutes}` : '')
+  const startTimeMinutes = dateToMinutes(dateTime)
+  duration = duration * 1 || defaultEventDuration * 60
+  const endTimeMinutes = startTimeMinutes + duration
+  const start = formatDateLite(dateTime) + (vuecal.time ? ` ${formatTimeLite(dateTime)}` : '')
+  const end = formatDateLite(dateTime) + (vuecal.time ? ` ${formatTimeLite(dateTime.addMinutes(duration))}` : '')
+
+  // Automatically add the required endTimeMinutes when passing an endDate.
+  if (eventOptions.endDate) eventOptions.endTimeMinutes = dateToMinutes(eventOptions.endDate)
 
   const event = {
     ...eventDefaults,
