@@ -6,173 +6,65 @@
 
     div.mb-n5 Earlier
     div(style="transform: scale(0.85);opacity: 0.8")
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | default active view
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Enable / disable views
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Hide / show weekends
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Add timeline w/ timerange &amp; increment
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Add timeline
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | time format 12/24 h
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Support for i18n
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Split days
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Support events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Background events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Overlap events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Keep only default style in CSS
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Allow custom arrows
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Default active date
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Double tap on touch devices
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        strong 1st NPM Release!
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Built-in themes
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Resize events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Delete events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Emit DOM events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Event indicator on month view
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Custom time format
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Highlight current time
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Show events on month view
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | sync 2 vue-cal instances
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Add CSS transitions
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Multiple day events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Custom events rendering
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Custom callback on event click
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Option to start week on Sunday
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | All day events in top bar
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Custom cell rendering
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Events count on year(s) views
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Create new event
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | min &amp; max dates
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Today button
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Externalize locales
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Support more simultaneous events
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Sticky day splits labels
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Hide particular weekdays
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Optional week number
-      v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-        v-icon.mr-1(size="20") check
-        | Date prototypes
+      todo-list-item default active view
+      todo-list-item Enable / disable views
+      todo-list-item Hide / show weekends
+      todo-list-item Add timeline w/ timerange &amp; increment
+      todo-list-item Add timeline
+      todo-list-item time format 12/24 h
+      todo-list-item Support for i18n
+      todo-list-item Split days
+      todo-list-item Support events
+      todo-list-item Background events
+      todo-list-item Overlap events
+      todo-list-item Keep only default style in CSS
+      todo-list-item Allow custom arrows
+      todo-list-item Default active date
+      todo-list-item Double tap on touch devices
+      todo-list-item 1st NPM Release!
+      todo-list-item Built-in themes
+      todo-list-item Resize events
+      todo-list-item Delete events
+      todo-list-item Emit DOM events
+      todo-list-item Event indicator on month view
+      todo-list-item Custom time format
+      todo-list-item Highlight current time
+      todo-list-item Show events on month view
+      todo-list-item sync 2 vue-cal instances
+      todo-list-item Add CSS transitions
+      todo-list-item Multiple day events
+      todo-list-item Custom events rendering
+      todo-list-item Custom callback on event click
+      todo-list-item Option to start week on Sunday
+      todo-list-item All day events in top bar
+      todo-list-item Custom cell rendering
+      todo-list-item Events count on year(s) views
+      todo-list-item Create new event
+      todo-list-item min &amp; max dates
+      todo-list-item Today button
+      todo-list-item Externalize locales
+      todo-list-item Support more simultaneous events
+      todo-list-item Sticky day splits labels
+      todo-list-item Hide particular weekdays
+      todo-list-item Optional week number
+      todo-list-item Date prototypes
 
     .mb-2 Current backlog
-    v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-      v-icon.mr-1(size="20") check
-      | Business hours
-    v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-      v-icon.mr-1(size="20") check
-      | Resize events snap to time
-    v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-      v-icon.mr-1(size="20") check
-      | Drag events snap to time
-    v-chip.ma-1.pl-0.pr-1(color="green" outlined small)
-      v-icon.mr-1(size="20") check
-      | Drag &amp; drop events
-    v-chip.ma-1.pl-0.pr-1(color="amber darken-1" outlined small)
-      v-icon.mr-1(size="20") timer
-      | Drop external events into Vue Cal
-    v-chip.ma-1.pl-0.pr-1(color="amber darken-1" outlined small)
-      v-icon.mr-1(size="20") timer
-      | Recurring events
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
-      | Drag &amp; drop multiple day events
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
-      | Drag &amp; drop events on touch devices
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
+    todo-list-item Business hours
+    todo-list-item Drag &amp; drop events
+    todo-list-item Resize events snap to time
+    todo-list-item Drag events snap to time
+    todo-list-item Drop external events into Vue Cal
+    todo-list-item(status="doing") Recurring events
+    todo-list-item(status="todo") Drag &amp; drop multiple day events
+    todo-list-item(status="todo") Drag &amp; drop events on touch devices
+    todo-list-item(status="todo")
       a(href="https://github.com/antoniandre/vue-cal/issues/168" target="_blank" style="text-decoration: underline;color: inherit") Full Typescript support
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
+    todo-list-item(status="todo")
       a(href="https://github.com/antoniandre/vue-cal/issues/127" target="_blank" style="text-decoration: underline;color: inherit") Full SSR support
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
-      | Improve multiple day events Month view
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
-      | Prevent event intersect. on drag/resize
-    v-chip.ma-1.pl-0.pr-1(color="deep-orange" outlined small)
-      v-icon.mr-1(size="20") access_time
-      | Horizontal timeline
+    todo-list-item(status="todo") Improve multiple day events Month view
+    todo-list-item(status="todo") Prevent event intersect. on drag/resize
+    todo-list-item(status="todo") Horizontal timeline
     //- TODO:
       General
       - do all the @todo in the codebase
@@ -1645,7 +1537,6 @@
     a#ex--overlapping-events(name="ex--overlapping-events")
   p.
     Overlapping, editable &amp; deletable events.#[br]
-    Overlapping now supports more than 3 simultaneous events.#[br]
     Try to resize &amp; delete events to see the overlapping redrawn.
 
   v-layout.mb-3(align-center)
@@ -1797,37 +1688,9 @@
       #[span.code showAllDayEvents] accepts a #[span.code Boolean] or the string
       #[span.code 'short'], to display only the event title.
 
-  highlight-message
-    ul
-      li
-        | Notice that on Windows machines, and on devices where the scrollbar takes some space and
-        | pushes the calendar main content (#[span.code week] and #[span.code day] views), the
-        | all-day bar is added some padding right to align well with the main content.
-        | This is done once, in the #[span.code mounted] hook.#[br]
-        | If your Vue Cal does not start in the #[span.code week] or #[span.code day] view, the
-        | realignment of the all-day bar will not happen, you can trigger it:
-        .layout(:class="{ column: $vuetify.breakpoint.sm }")
-          sshpre.mt-3.mb-0.flex.fill-height(
-            language="html-vue"
-            :class="{ 'mr-2': !$vuetify.breakpoint.sm }").
-            &lt;vue-cal
-              ref="vuecal"
-              show-all-day-events
-              @view-change="!aligned &amp;&amp; alignAllDayBar()" /&gt;
-          sshpre.mt-3.flex.fill-height(language="js").
-            data: () => ({
-              aligned: false
-            }),
-            methods: {
-              alignAllDayBar () {
-                this.$nextTick(this.$refs.vuecal.alignAllDayBar)
-                this.aligned = true
-              }
-            }
-
-      li.
-        Multiple-day events feature will be improved in a future version to display across
-        multiple cells in the all day bar.
+  highlight-message.
+    Multiple-day events feature will be improved in a future version to display across
+    multiple cells in the all day bar.
 
   v-btn.ma-1(small color="primary" @click="showAllDayEvents = (showAllDayEvents + 1) % 3")
     span.code :show-all-day-events="{{ ["'short'", 'true', 'false'][showAllDayEvents] }}"
@@ -2058,13 +1921,13 @@
     Here is the list of emitted events:
   h4.mt-2 View-related
   ul
-    li #[span.code ready]
-    li #[span.code view-change]
-    li #[span.code cell-click] - returns a JS native #[span.code Date] object
-    li #[span.code cell-dblclick] - returns a JS native #[span.code Date] object
-    li #[span.code cell-contextmenu] - returns a JS native #[span.code Date] object and x, y: the cursor coordinates.
-    li #[span.code cell-keypress-enter] - returns a JS native #[span.code Date] object
-    li #[span.code cell-focus] - returns a JS native #[span.code Date] object
+    li #[code ready]
+    li #[code view-change]
+    li #[code cell-click] - returns a JS native #[span.code Date] object
+    li #[code cell-dblclick] - returns a JS native #[span.code Date] object
+    li #[code cell-contextmenu] - returns a JS native #[span.code Date] object and x, y: the cursor coordinates.
+    li #[code cell-keypress-enter] - returns a JS native #[span.code Date] object
+    li #[code cell-focus] - returns a JS native #[span.code Date] object
   highlight-message(type="tips")
     ul
       li.
@@ -2097,40 +1960,53 @@
       (cells before and after the current month) are also returned in the array.
 
   h4.mt-2 Events-related
-  p.mb-0.
-    In all the following emitted events, the calendar event being modified is returned.#[br]
-    Note that in the event, #[span.code startDate] &amp; #[span.code endDate] are JS native #[span.code Date] objects.
   ul
-    li #[span.code event-focus]
-    li #[span.code event-mouse-enter]
-    li #[span.code event-mouse-leave]
-    li #[span.code event-create]
-    li #[span.code event-delete]
-    li #[span.code event-change]
-    li #[span.code event-title-change]
-    //- li #[span.code event-content-change]
-    li #[span.code event-duration-change] &nbsp;#[span.code.grey--text // Only fired at the end of event resizing.]
-    li
-      span.code event-drop#[br]
-      | The #[span.code event-drop] has a different return, as it contains more information:
+    li.mt-3 #[code.mr-1 event-focus] - returns the associated calendar event object.
+    li.mt-3 #[code.mr-1 event-mouse-enter] - returns the associated calendar event object.
+    li.mt-3 #[code.mr-1 event-mouse-leave] - returns the associated calendar event object.
+    li.mt-3 #[code.mr-1 event-create] - returns the associated calendar event object.
+    li.mt-3 #[code.mr-1 event-delete] - returns the associated calendar event object.
+    li.mt-2 #[code event-title-change] - returns an object containing:
       ul
         li #[span.code event], the calendar event object that was dropped
-        li #[span.code oldDate], the Javascript Date the event was starting from
+        li #[span.code oldTitle], the title of the event before it was edited
+
+    //- li #[span.code event-content-change]
+    li.mt-2
+      code.mr-1 event-duration-change
+      span.grey--text (only fired at the end of the event resizing)
+      | #[br]Returns an object containing:
+      ul
+        li #[span.code event], the calendar event object that was resized
+        li #[span.code oldDate], the Javascript Date the event was ending at before resize
+    li.mt-2
+      code.mr-1 event-drop
+      | - returns an object containing:
+      ul
+        li #[span.code event], the calendar event object that was dropped
+        li #[span.code oldDate], the Javascript Date the event was starting from before drag
         li #[span.code newDate], the Javascript Date the event is now starting from
         li #[span.code oldSplit] only if splitting days, the id of the split the event came from
         li #[span.code newSplit] only if splitting days, the id of the split the event is dropped into
+    li.mt-3 #[code.mr-1 event-change] - returns an object containing:
+      ul
+        li #[span.code event], the calendar event object that was changed
+        li.
+          #[span.code originalEvent], the same calendar event before the change
+          (#[span.code null] when creating event)
 
   highlight-message(type="tips")
     ul
       li.
         The #[span.code event-change] emitted event groups all the events triggered on a calendar event property change:
         #[span.code event-title-change], #[span.code event-drop],
-        #[span.code event-duration-change]. So you have the choice to listen to
+        #[span.code event-duration-change] and #[span.code event-create]. So you have the choice to listen to
         #[span.code event-change] to cover any calendar event change or listen to a specific action emitted event.
       li.mt-3.
-        To help you manipulate an event's date, vue-cal returns native #[span.code Date]
+        To help you manipulate an event's date, Vue Cal returns native #[span.code Date]
         objects in the event properties #[span.code startDate] &amp; #[span.code endDate].#[br]
-        So for instance, you can easily access the day of the week of an event with #[span.code event.startDate.getDay()].
+        So for instance, you can easily access the day of the week of an event with #[span.code event.startDate.getDay()].#[br]
+        You can then use Vue Cal #[a(href="#date-prototypes") Date prototypes] to manipulate and format the Date as you want.
 
   p.mb-0 Watch the list of emitted events (#[strong latest on top]) as you play with Vue Cal:
   pre.mt-2.ssh-pre.mb-2
@@ -2516,7 +2392,7 @@
     #[a(href="https://vuejs.org/v2/guide/components-slots.html#Scoped-Slots" target="_blank") vuejs.org/v2/guide/components-slots.html #[v-icon(small color="primary") open_in_new]]
   p.
     In the following example, we only count the events which have the custom
-    #[span.code leisure] CSS class.
+    #[span.code leisure] CSS class (orange color).
 
   v-card.my-2.ma-auto.main-content(style="width: 300px;height: 360px;max-width: 100%")
     vue-cal.vuecal--green-theme.ex--custom-events-count(
@@ -2571,7 +2447,7 @@
   sshpre(language="css" label="CSS").
     .vuecal__cell-events-count {background: transparent;}
     .vuecal__cell-events-count span {
-      background: #42b983;
+      background: #fd9c42;
       height: 100%;
       min-width: 12px;
       padding: 0 3px;
@@ -2671,7 +2547,7 @@
         span(v-else-if="view.id === 'year'") {{ view.startDate.format('YYYY') }}
         span(v-else-if="view.id === 'month'") {{ view.startDate.format('MMMM YYYY') }}
         span(v-else-if="view.id === 'week'") w{{ view.startDate.getWeek() }} ({{ view.startDate.format('MMM YYYY') }})
-        span(v-else-if="view.id === 'day'") {{ view.startDate.format('dddd D MMMM YY') }}
+        span(v-else-if="view.id === 'day'") {{ view.startDate.format('dddd D MMMM (YYYY)') }}
         | &nbsp;🎉
       template(v-slot:cell-content="{ cell, view, events, goNarrower }")
         span.vuecal__cell-date.clickable(v-if="view.id !== 'day'" :class="view.id" @click="goNarrower") {{ cell.content }}
@@ -2692,7 +2568,7 @@
         &lt;span v-else-if="view.id === 'year'"&gt;{{ "\{\{ view.startDate.format('YYYY') \}\}" }}&lt;/span&gt;
         &lt;span v-else-if="view.id === 'month'"&gt;{{ "\{\{ view.startDate.format('MMMM YYYY') \}\}" }}&lt;/span&gt;
         &lt;span v-else-if="view.id === 'week'"&gt;w{{ "\{\{ view.startDate.getWeek() \}\} (\{\{ view.startDate.format('MMM YYYY') \}\}" }})&lt;/span&gt;
-        &lt;span v-else-if="view.id === 'day'"&gt;{{ "\{\{ view.startDate.format('dddd D MMMM YY') \}\}" }}&lt;/span&gt;
+        &lt;span v-else-if="view.id === 'day'"&gt;{{ "\{\{ view.startDate.format('dddd D MMMM (YYYY)') \}\}" }}&lt;/span&gt;
         🎉
       &lt;/template&gt;
 
@@ -2863,7 +2739,7 @@
     splitDays:              [Array],           default: []
     stickySplitLabels:      [Boolean],         default: false
     events:                 [Array],           default: []
-    editableEvents:         [Boolean],         default: false
+    editableEvents:         [Boolean, Object], default: false
     resizeX:                [Boolean],         default: false
     snapToTime:             [Number],          default: null
     eventsOnMonthView:      [Boolean, String], default: false
@@ -3094,7 +2970,7 @@
       span.code [Boolean], default: true
       p.
         Allows you to disable the default event creation on cell click &amp; hold which only
-        happens if #[span.code editableEvents] is set to #[span.code true].
+        happens if #[span.code editableEvents.create] is set to #[span.code true].
     li
       code.mr-2 time
       span.code [Boolean], default: true
@@ -3210,15 +3086,22 @@
         instead of in-cell.
     li
       code.mr-2 editableEvents
-      span.code [Boolean], default: false
+      span.code [Boolean, Object], default: false
       p
-        | When #[span.code editableEvents] is set to #[span.code true], allows:
+        | When #[span.code editableEvents] is set to #[span.code true], it allows:
         ul
-          li Drag and drop events
+          li Dragging and dropping events
           li Resizing events by dragging the handle showing at the bottom of each event if #[span.code time] is set to #[span.code true],
           li Deleting events by click and hold an event.
           li Editing events title
-      highlight-message You can still force an event to be undeletable or unresizable from the #[span.code deletable] &amp; #[span.code resizable] event attributes.
+      highlight-message
+        ul
+          li
+            | You can set more accurately which edition you want to allow by passing an object.#[br]
+            | For instance, this object will allow all the above editions except the drag &amp; drop:
+            div.code.black--text { title: true, drag: false, resize: true, delete: true, create: true }
+          li.
+            You can still force an event to be undeletable or unresizable from the #[span.code deletable] &amp; #[span.code resizable] event attributes.
     li
       code.mr-2 resizeX
       span.code [Boolean], default: false
@@ -3488,6 +3371,13 @@
 
   h3.mt-12 # Disabled text selection
   p.
+    Notice that on Windows machines, and on devices where the scrollbar takes some space and
+    pushes the calendar main content (#[span.code week] and #[span.code day] views), the
+    weekdays headings and the all-day bar get an added padding right to align well with the main content.#[br]
+    This is done once, in the #[span.code mounted] hook.
+
+  h3.mt-12 # Disabled text selection
+  p.
     By default the selection is disabled in the whole calendar except in the events.
     you can override this by CSS.
 
@@ -3502,10 +3392,12 @@
     h3.mt-0.pt-0 The arrival of the drag &amp; drop feature marks a new milestone for Vue Cal!
     p.mb-0.
       Many subsequent features to come, progressively building the most intuitive full-featured and flexible calendar
-      on Vue.js, 100% designed for Vue, and still with no dependency!
+      on Vue.js, 100% designed for Vue, and still no dependency!
     highlight-message.mb-0(type="warning")
-      h3.mt-0.pt-0 Like the native HTML5 drag &amp; drop it's built with, Vue Cal's drag &amp; drop is not available on touch screens
-      p Vue Cal will support touch screen drag &amp; drop later on, using an alternative technology.
+      h3.mt-0.pt-0.
+        Like the native HTML5 drag &amp; drop it's built with, Vue Cal's drag &amp; drop is not
+        available on touch screens
+      p.mb-0 Vue Cal will support touch screen drag &amp; drop later on, using an alternative technology.
 
     highlight-message.mb-6(type="success")
       h3.mt-0.pt-0 New Features
@@ -3516,23 +3408,45 @@
           h4.mt-0 Drop an external (HTML5 draggable) event into Vue Cal or between 2 Vue Cal instances
         li
           h4.mt-0 #[span.code snapToTime] option on event drop and event resize
-          p Refer to the #[span.code snapToTime] option in the #[a(href="#api") API section].#[br]
+          p Refer to the #[span.code snapToTime] option in the #[a(href="#api") API section].
+        li
+          h4.mt-0 The #[span.code editableEvents] option now also accept an object to precisely allow specific edition
+          p Refer to the #[span.code editableEvents] option in the #[a(href="#api") API section].
       h3.mt-0.mb-2 Big changes
       ul
         li.
-          Vue Cal's createEvent() function now accepts a duration parameter to easily override
-          the default 2 hours. (ref. #[a(href="#ex--more-advanced-event-creation") More advanced event creation] example)
+          The #[span.code event-change] emitted event now returns an object containing the
+          #[span.code event] and the #[span.code originalEvent].
+        li.
+          the #[span.code event-title-change] and #[span.code event-duration-change] events now return an object
+          containing the #[span.code event] and the #[span.code oldTitle] or #[span.code oldDate].
+        li.
+          Vue Cal's #[span.code createEvent()] function now accepts a duration parameter to easily override
+          the default 2 hours.
+          (ref. #[a(href="#ex--more-advanced-event-creation") More advanced event creation] example)
         li.
           The internal event #[span.code classes] property is replaced with
-          #[span.code class] like in the external event definition. Now you can
-          keep updating the #[span.code class] property from your component methods
-          called from Vue Cal fired events.
+          #[span.code class] like in the external event definition. This means you can now
+          update the #[span.code class] property seemlessly like the initial event definition.
+          (From your component methods called from Vue Cal fired events or from #[span.code onEventCreate])
+
         li
           h4.mt-3.pt-0 Renamed slot
           p The #[span.code event-renderer] slot is renamed into #[span.code event]
+
       h3.mt-0.mb-2 Other noticeable changes
       ul
-        li When creating an event with a given endDate, automatically add the required endTimeMinutes.
+        li.
+          When creating an event with a given #[span.code endDate], the required
+          #[span.code endTimeMinutes] is automatically add.
+        li
+          h4.mt-3.pt-0 You don't need to call #[span.code alignAllDayBar()] anymore
+          p.
+            Previously, in some cases you would need to call this function to realign the
+            all-day bar with the scrollbar when the scrollbar is fixed (E.g. on Windows).#[br]
+            Now the function (renamed to #[span.code alignWithScrollbar]) is triggered automatically
+            and in all the cases, once, in mounted.#[br]
+            It will now also align the weekdays headings if needed.
         li
           h4.mt-3.pt-0 Renamed CSS classes
           p.
@@ -3896,7 +3810,8 @@
 import VueCal from '@/components/vue-cal'
 import Sshpre from 'simple-syntax-highlighter'
 import 'simple-syntax-highlighter/dist/sshpre.css'
-import highlightMessage from '@/components/highlight-message'
+import HighlightMessage from '@/components/highlight-message'
+import TodoListItem from '@/components/todo-list-item'
 
 const dailyHours = { from: 9 * 60, to: 18 * 60, class: 'business-hours' }
 
@@ -3985,7 +3900,7 @@ const events = [
 ]
 
 export default {
-  components: { VueCal, Sshpre, highlightMessage },
+  components: { VueCal, Sshpre, HighlightMessage, TodoListItem },
   data: () => ({
     localesList: [
       { code: 'ar', label: 'Arabic' },
@@ -4617,7 +4532,7 @@ $primary: #42b983;
 
 .ex--custom-events-count {
   .vuecal__cell-events-count span {
-    background: $primary;
+    background-color: #fd9c42;
     height: 100%;
     min-width: 12px;
     padding: 0 3px;

@@ -2,8 +2,10 @@
 .vuecal(column :class="cssClasses" ref="vuecal" :lang="locale")
   vuecal-header(
     :options="$props"
+    :edit-events="editEvents"
     :view-props="{ views, view, weekDaysInHeader }"
     :week-days="weekDays"
+    :has-splits="hasSplits"
     :day-splits="daySplits"
     :switch-to-narrower-view="switchToNarrowerView")
     template(v-slot:arrow-prev)
@@ -39,6 +41,7 @@
               v-for="(cell, i) in viewCells"
               :key="i"
               :options="$props"
+              :edit-events="editEvents"
               :data="cell"
               :all-day="true"
               :min-timestamp="minTimestamp"
@@ -47,7 +50,7 @@
               template(v-slot:event="{ event, view }")
                 slot(name="event" :view="view" :event="event")
                   .vuecal__event-title.vuecal__event-title--edit(
-                    v-if="editableEvents && event.title"
+                    v-if="editEvents.title && event.title"
                     contenteditable
                     @blur="onEventTitleBlur($event, event)"
                     v-html="event.title")
@@ -95,6 +98,7 @@
                   v-for="(cell, i) in viewCells"
                   :key="i"
                   :options="$props"
+                  :edit-events="editEvents"
                   :data="cell"
                   :cell-width="hideWeekdays.length && ['month', 'week'].includes(view.id) && cellWidth"
                   :min-timestamp="minTimestamp"
@@ -112,27 +116,32 @@
                   template(v-slot:event="{ event, view }")
                     slot(name="event" :view="view" :event="event")
                       .vuecal__event-title.vuecal__event-title--edit(
-                        v-if="editableEvents && event.title"
+                        v-if="editEvents.title && event.title"
                         contenteditable
                         @blur="onEventTitleBlur($event, event)"
                         v-html="event.title")
                       .vuecal__event-title(v-else-if="event.title" v-html="event.title")
-                      .vuecal__event-time(v-if="time && !event.allDay && (event.startTimeMinutes || event.endTimeMinutes) && !(view === 'month' && (event.allDay || showAllDayEvents === 'short')) && !isShortMonthView")
-                        | {{ formatTime(event.startTimeMinutes) }}
-                        span(v-if="event.endTimeMinutes") &nbsp;- {{ formatTime(event.endTimeMinutes) }}
+                      .vuecal__event-time(v-if="time && !event.allDay && !(view === 'month' && (event.allDay || showAllDayEvents === 'short')) && !isShortMonthView")
+                        | {{ event.startDate.formatTime() }}
+                        span(v-if="event.endTimeMinutes") &nbsp;- {{ event.endDate.formatTime() }}
                         small.days-to-end(v-if="event.daysCount > 1 && (event.segments[cell.formattedDate] || {}).isFirstDay") &nbsp;+{{ event.daysCount - 1 }}{{ (texts.day[0] || '').toLowerCase() }}
                       .vuecal__event-content(
                         v-if="event.content && !(view === 'month' && event.allDay && showAllDayEvents === 'short') && !isShortMonthView"
                         v-html="event.content")
                   slot(v-slot:no-event) {{ texts.noEvent }}
+    //- Used in alignWithScrollbar() to realign weekdays headings.
+    .vuecal__scrollbar-check(v-if="!ready")
+      div
 </template>
 
 <script>
 import { updateDateTexts, getPreviousFirstDayOfWeek, formatDate, formatDateLite, formatTime, formatTimeLite, stringToDate, countDays, dateToMinutes } from './date-utils'
 import { eventDefaults, createAnEvent, createEventSegments, addEventSegment, removeEventSegment, eventInRange } from './event-utils'
+
 import Header from './header'
 import WeekdaysHeadings from './weekdays-headings'
 import Cell from './cell'
+
 import './styles.scss'
 
 const minutesInADay = 24 * 60 // Don't do the maths every time.
@@ -165,7 +174,7 @@ export default {
     dblclickToNavigate: { type: Boolean, default: true },
     defaultView: { type: String, default: 'week' },
     disableViews: { type: Array, default: () => [] },
-    editableEvents: { type: Boolean, default: false },
+    editableEvents: { type: [Boolean, Object], default: false },
     events: { type: Array, default: () => [] },
     eventsCountOnYearView: { type: Boolean, default: false },
     eventsOnMonthView: { type: [Boolean, String], default: false },
@@ -207,9 +216,9 @@ export default {
     xsmall: { type: Boolean, default: false }
   },
   data: () => ({
+    ready: false, // Is vue-cal ready.
     // Make texts reactive before a locale is loaded.
     texts: { ...textsDefaults },
-    ready: false, // Is vue-cal ready.
 
     // At any time this object will be filled with current view, visible events and selected date.
     view: {
@@ -240,7 +249,8 @@ export default {
         split: null,
         segment: null,
         originalEndTimeMinutes: 0,
-        endTimeMinutes: 0,
+        originalEndDate: null,
+        endDate: null,
         startCell: null,
         endCell: null
       },
@@ -630,15 +640,26 @@ export default {
       if (resizeAnEvent._eid) {
         this.domEvents.cancelClickEventCreation = true
         const event = this.view.events.find(e => e._eid === resizeAnEvent._eid)
-        if (event && event.endTimeMinutes !== resizeAnEvent.originalEndTimeMinutes) {
-          // Store modified event back in mutable events.
+        const { originalEndDate } = resizeAnEvent
+
+        // When resizing the endTime changes but the day may change too when resizing horizontally.
+        // So compare timestamps instead of only endTimeMinutes.
+        if (event && event.endDate.getTime() !== originalEndDate.getTime()) {
+          // Update the modified event in the mutable events array.
           const mutableEvent = this.mutableEvents.find(e => e._eid === resizeAnEvent._eid)
           mutableEvent.endTimeMinutes = event.endTimeMinutes
           mutableEvent.end = event.end
           mutableEvent.endDate = event.endDate
 
-          this.emitWithEvent('event-duration-change', event)
-          this.emitWithEvent('event-change', event)
+          const cleanEvent = this.cleanupEvent(event)
+          const originalEvent = {
+            ...this.cleanupEvent(event),
+            endDate: originalEndDate,
+            end: `${originalEndDate.format()} ${originalEndDate.formatTime()}`,
+            endTimeMinutes: event.originalEndTimeMinutes
+          }
+          this.$emit('event-duration-change', { event: cleanEvent, oldDate: resizeAnEvent.originalEndDate })
+          this.$emit('event-change', { event: cleanEvent, originalEvent })
         }
 
         if (event) event.resizing = false
@@ -647,6 +668,7 @@ export default {
         resizeAnEvent.split = null
         resizeAnEvent.segment = null
         resizeAnEvent.originalEndTimeMinutes = null
+        resizeAnEvent.originalEndDate = null
         resizeAnEvent.endTimeMinutes = null
         resizeAnEvent.startCell = null
         resizeAnEvent.endCell = null
@@ -720,10 +742,12 @@ export default {
       // If no change cancel action.
       if (event.title === e.target.innerHTML) return
 
+      const cleanEvent = this.cleanupEvent(event)
+      const oldTitle = event.title
       event.title = e.target.innerHTML
 
-      this.emitWithEvent('event-title-change', event)
-      this.emitWithEvent('event-change', event)
+      this.$emit('event-title-change', { event: cleanEvent, oldTitle })
+      this.$emit('event-change', { event: cleanEvent, originalEvent: { cleanEvent, title: oldTitle } })
     },
 
     /**
@@ -970,24 +994,24 @@ export default {
 
     /**
      * On Windows devices, the .vuecal__bg's vertical scrollbar takes space and pushes the content.
-     * This function will also push the all-day bar to have it properly aligned.
+     * This function will also push the weekdays-headings and all-day bar to have them properly aligned.
      * The calculated style will be placed in the docment head in a style tag so it's only done once
      * (the scrollbar width never changes).
      * Ref. https://github.com/antoniandre/vue-cal/issues/221
      */
-    alignAllDayBar () {
+    alignWithScrollbar () {
       // If already done from another instance, exit.
-      if (document.getElementById('align-all-day-bar')) return
+      if (document.getElementById('vuecal-align-with-scrollbar')) return
 
-      const bg = this.$refs.vuecal.getElementsByClassName('vuecal__bg')[0]
+      const bg = this.$refs.vuecal.getElementsByClassName('vuecal__scrollbar-check')[0]
       const scrollbarWidth = bg.offsetWidth - bg.children[0].offsetWidth
 
       // Only add a style tag once and if a scrollbar width is detected.
       if (scrollbarWidth) {
         const style = document.createElement('style')
-        style.id = 'align-all-day-bar'
+        style.id = 'vuecal-align-with-scrollbar'
         style.type = 'text/css'
-        style.innerHTML = `.vuecal__all-day {padding-right: ${scrollbarWidth}px}`
+        style.innerHTML = `.vuecal__weekdays-headings,.vuecal__all-day {padding-right: ${scrollbarWidth}px}`
         document.head.appendChild(style)
       }
     }
@@ -1019,11 +1043,11 @@ export default {
   mounted () {
     const hasTouch = 'ontouchstart' in window
 
-    if (this.editableEvents) {
+    if (this.editEvents.resize || this.editEvents.drag) {
       window.addEventListener(hasTouch ? 'touchmove' : 'mousemove', this.onMouseMove, { passive: false })
       window.addEventListener(hasTouch ? 'touchend' : 'mouseup', this.onMouseUp)
-      window.addEventListener('keyup', this.onKeyUp)
     }
+    if (this.editEvents.title) window.addEventListener('keyup', this.onKeyUp)
 
     // Disable context menu on touch devices on the whole vue-cal instance.
     if (hasTouch) {
@@ -1034,7 +1058,7 @@ export default {
     }
 
     // https://github.com/antoniandre/vue-cal/issues/221
-    if (this.showAllDayEvents) this.alignAllDayBar()
+    this.alignWithScrollbar()
 
     // Emit the `ready` event with useful parameters.
     const startDate = this.view.startDate
@@ -1064,6 +1088,25 @@ export default {
   },
 
   computed: {
+    editEvents () {
+      if (this.editableEvents && typeof this.editableEvents === 'object') {
+        return {
+          title: !!this.editableEvents.title,
+          drag: !!this.editableEvents.drag,
+          resize: !!this.editableEvents.resize,
+          create: !!this.editableEvents.create,
+          delete: !!this.editableEvents.delete
+        }
+      }
+
+      return {
+        title: !!this.editableEvents,
+        drag: !!this.editableEvents,
+        resize: !!this.editableEvents,
+        create: !!this.editableEvents,
+        delete: !!this.editableEvents
+      }
+    },
     views () {
       return {
         years: { label: this.texts.years, enabled: !this.disableViews.includes('years') },

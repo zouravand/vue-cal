@@ -135,7 +135,7 @@ export const eventDragEnd = (e, event, vuecal) => {
 
   // If an event is dragged from a Vue Cal instance and dropped in a different one, remove the
   // event from the first one.
-  let { fromVueCal, toVueCal } = dragging
+  const { fromVueCal, toVueCal } = dragging
   if (toVueCal && fromVueCal !== toVueCal) deleteAnEvent(event, vuecal)
   dragging.fromVueCal = null
   dragging.toVueCal = null
@@ -277,11 +277,11 @@ export const cellDragDrop = (e, cell, cellDate, vuecal, split) => {
     oldDate,
     newDate: event.startDate,
     ...((split || split === 0) && { oldSplit, newSplit: split }),
-    originalEvent: transferData,
+    originalEvent: vuecal.cleanupEvent(transferData),
     external: !dragging.fromVueCal // If external event, not coming from any Vue Cal.
   }
   vuecal.$emit('event-drop', params)
-  vuecal.$emit('event-change', params.event)
+  vuecal.$emit('event-change', { event: params.event, originalEvent: params.originalEvent })
 }
 
 /**
