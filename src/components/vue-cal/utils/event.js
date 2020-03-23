@@ -17,9 +17,9 @@ let formatDateLite, stringToDate, formatTimeLite, countDays, datesInSameTimeStep
 let _cellOverlaps, _comparisonArray
 
 // This is an approximation, it will not work with DLS time.
-// const approxDayMilliseconds = minutesInADay * 60 * 1000
+const approxDayMilliseconds = minutesInADay * 60 * 1000
 // This is an approximate minimum we can get in a year. Purposely stay bellow 365 but close.
-// const minYearMilliseconds = 364 * approxDayMilliseconds // Don't do the maths every time.
+const minYearMilliseconds = 364 * approxDayMilliseconds // Don't do the maths every time.
 
 export default class EventUtils {
   _vuecal = null
@@ -453,16 +453,180 @@ export default class EventUtils {
    * @return {Boolean} true if in range, even partially.
    */
   eventInRange (event, start, end) {
+    console.log('eventInRange', event.occurrences, formatDateLite(start), formatDateLite(end))
     // Check if all-day or timeless event (if date but no time there won't be a `:` in event.start).
-    if (event.allDay || event.start.indexOf(':') === -1) {
+    if (event.allDay || !event.start.includes(':')) {
       // Get the date and discard the time if any, then check it's within the date range.
-      const eventStart = new Date(event.startDate).setHours(0, 0, 0, 0)
-      return (eventStart >= new Date(start).setHours(0, 0, 0, 0) &&
-        eventStart <= new Date(end).setHours(0, 0, 0, 0))
+      const eventStartMidnight = new Date(event.startDate).setHours(0, 0, 0, 0)
+      const startMidnight = new Date(start).setHours(0, 0, 0, 0)
+      const endMidnight = new Date(end).setHours(23, 59, 59, 999)
+      const inRange = eventStartMidnight >= startMidnight && eventStartMidnight <= endMidnight
+      return inRange || (event.repeat && this.recurringEventInRange(event, new Date(startMidnight), new Date(endMidnight)))
     }
+
+    if (event.repeat) return this.recurringEventInRange(event, start, end)
 
     const startTimestamp = event.startDate.getTime()
     const endTimestamp = event.endDate.getTime()
-    return startTimestamp < end.getTime() && endTimestamp > start.getTime()
+    const inRange = startTimestamp < end.getTime() && endTimestamp > start.getTime()
+
+    return inRange
+  }
+
+  /**
+   * Tells whether a recurring event is in a given date range, even partially.
+   * That means: first check the original event date, then also check if range
+   * contains one of the repeated days.
+   *
+   * @param {Object} event The event to test.
+   * @param {Date} start The start of range date object.
+   * @param {Date} end The end of range date object.
+   * @return {Boolean} true if in range, even partially.
+   */
+  recurringEventInRange (event, start, end) {
+    console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
+    // Event starts after the given range.
+    if (end.getTime() <= event.startDate.getTime()) return false
+
+    // For performance, event occurrences are cached until the view is changed (deleted in `addEventsToView`).
+    // `occurrences` is the number of times the same event is in view.
+    if (event.occurrences) {
+      // Simplified version of occurrences for years and year views:
+      // only keep a number of occurrences per year (years view) or per month (year view).
+      // `years` view if the current range is a whole year (for each cell).
+      if (!start.getMonth() && end.getMonth() < 10) return event.occurrences[start.getFullYear()] || 0
+      // `year` view if the current range is a whole month (for each cell).
+      else if (start.getDate() === 1 && end.getDate() >= 28) return event.occurrences[start.getMonth() + 1] || 0
+      else {
+        let inView = 0
+        Object.values(event.occurrences).forEach(occurrence => {
+          const { start: startTimestamp, end: endTimestamp } = occurrence
+          // console.log(occurrence, startTimestamp < end.getTime(), endTimestamp > start.getTime())
+          if (startTimestamp < end.getTime() && endTimestamp > start.getTime()) inView++
+        })
+        return inView
+      }
+    }
+
+    // When calculating on a whole year or more, just return the occurrences number,
+    // don't loop through every day.
+    if (event.repeat && end.getTime() - start.getTime() >= minYearMilliseconds) {
+      return this.recurringEventInRangeLite(event, start, end)
+    }
+
+    return this.recurringEventInRangeLoop(event, start, end)
+  }
+
+  // @todo: MUST DO THIS - WAAAAAAY MORE PERFORMANT.
+  recurringEventInRangeLoop (event, start, end, buildOccurences = true) {
+    const endTimestamp = Math.min(end.getTime(), event.repeat.until ? stringToDate(event.repeat.until).getTime() : Infinity)
+    const eventMonthDate = event.startDate.getDate()
+    const eventMonth = event.startDate.getMonth()
+    let repeatXDays = !isNaN(event.repeat.every)
+    const repeatDaysModulo = repeatXDays ? event.repeat.every * approxDayMilliseconds : null
+    const eventStartMidnight = repeatXDays ? new Date(event.startDate).setHours(0, 0, 0, 0) : null
+    let tmpDate = start
+    let tmpDateTimestamp = tmpDate.getTime()
+    const occurrences = {}
+
+    // For each day of the range, find if the current event is repeated within this day.
+    // E.g. if the range contains a weekday of the event weekdays repeat array, or a day of the repeatDaysModulo.
+    while (tmpDateTimestamp < endTimestamp) {
+      // This list of cases don't waste execution time:
+      // The JS does not execute the remainder of each condition if first part fails (e.g. `event.repeat.weekdays &&`).
+      const repeatWeekdays = event.repeat.weekdays && event.repeat.weekdays.includes(tmpDate.getDay() || 7)
+      // Work with timestamps - for modulo - rather than month dates because timestamps always increase, but month dates
+      // are reset to 1 after 30/31.
+      // The calculation is way more complex with month dates: need to check when crossing end of month and month length.
+      repeatXDays = repeatDaysModulo && !((tmpDateTimestamp - eventStartMidnight) % repeatDaysModulo)
+      const repeatDay = event.repeat.every === 'day'
+      const repeatWeek = event.repeat.every === 'week' && event.startDate.getDay() === tmpDate.getDay()
+      const repeatMonth = event.repeat.every === 'month' && eventMonthDate === tmpDate.getDate()
+      const repeatYear = event.repeat.every === 'year' && eventMonthDate === tmpDate.getDate() && eventMonth === tmpDate.getMonth()
+
+      if (repeatWeekdays || repeatXDays || repeatDay || repeatWeek || repeatMonth || repeatYear) {
+        // If multiple-day event, we will have to create segments (in `createEventSegments`)
+        // based on the exact same rules, so once it's in the view then keep the result in an
+        // array for fast comparison.
+        occurrences[formatDateLite(tmpDate)] = {
+          start: new Date(tmpDateTimestamp).setHours(0, event.startTimeMinutes, 0),
+          end: new Date(tmpDateTimestamp).addDays(event.daysCount - 1).setHours(0, event.endTimeMinutes, 0)
+        }
+        if (buildOccurences) event.occurrences = occurrences
+      }
+      tmpDate = tmpDate.addDays(1)
+      tmpDateTimestamp = tmpDate.getTime()
+    }
+
+    return Object.keys(occurrences).length
+  }
+
+  // This function calculates event occurrences in `years` and `year` views only
+  // and it is called only once per view.
+  // But it has to be very performant:
+  // The `years` view contains 25 years and the `year` view has a full year.
+  // For that, occurrences array is simplified and contain only the total
+  // count of event repetitions per cell.
+  recurringEventInRangeLite (event, start, end) {
+    const { every, until } = event.repeat
+    // If starts after the end of `repeat.until` date then return false.
+    if (until && start.getTime() >= stringToDate(until).getTime()) return false
+    if (event.occurrences && Object.keys(event.occurrences).length) return true
+
+    // On `years` view, a cell is a full year, on `year` view a cell is a month.
+    const yearsView = start.getFullYear() !== end.getFullYear()
+
+    event.occurrences = {}
+    if (yearsView) {
+      // Loop through years.
+      let i = Math.max(event.startDate.getFullYear(), start.getFullYear())
+      const endYear = until ? Math.min(end.getFullYear(), stringToDate(until)) : end.getFullYear()
+      for (i; i <= endYear; i++) {
+        // @todo: do the exact count.
+        if (every === 'day') event.occurrences[i] = start.isLeapYear() ? 366 : 365
+        else if (every === 'week') event.occurrences[i] = 52
+        else if (every === 'month') event.occurrences[i] = 12
+        else if (every === 'year') event.occurrences[i] = 1
+      }
+    }
+    else {
+      // Loop through months.
+      for (let i = 1; i <= 12; i++) {
+        // @todo: do the exact count.
+        const monthFirstDay = new Date(start)
+        monthFirstDay.setMonth(i - 1)
+        const monthLastDay = new Date(monthFirstDay)
+        monthLastDay.setMonth(i)
+        monthLastDay.setDate(0)
+        monthLastDay.setHours(23, 59, 59)
+
+        event.occurrences[i] = this.recurringEventInRangeLoop(event, monthFirstDay, monthLastDay, false)
+        // if (every === 'day') event.occurrences[i] = end.getDate()
+        // else if (every === 'week') event.occurrences[i] = 4
+        // else if (every === 'month') event.occurrences[i] = 1
+        // else if (every === 'year') event.occurrences[i] = 0
+      }
+    }
+
+    /* if (every) {
+      switch (every) {
+        case 'day':
+        case 'week':
+        case 'month':
+        case 'year': break
+        default: {
+          // If `every` is a number.
+          // @todo: do the exact count.
+          if (!isNaN(every)) event.occurrences = 1000
+          break
+        }
+      }
+    }
+    else if (weekdays) {
+      event.occurrences = {}
+      event.occurrences['2018-01-01'] = weekdays.length * 52
+    } */
+
+    return true
   }
 }

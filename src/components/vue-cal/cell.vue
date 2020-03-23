@@ -324,9 +324,9 @@ export default {
 
       return this.events.reduce((sum, e) => {
         const { occurrences = 0 } = e
-        if (this.view === 'years') return sum += occurrences[cellYear] || 0
-        if (this.view === 'year') return sum += occurrences[cellMonth] || 0
-        return sum += occurrences && isNaN(occurrences) ? Object.keys(occurrences).length : occurrences
+        if (this.view === 'years') return (sum += occurrences[cellYear] || 0)
+        if (this.view === 'year') return (sum += occurrences[cellMonth] || 0)
+        return (sum += occurrences && isNaN(occurrences) ? Object.keys(occurrences).length : occurrences)
       }, 0)
     },
     splits () {

@@ -315,7 +315,7 @@ export default {
           // weekdays: [1, 4],
           until: '2020-11-30'
         }
-      },
+      }
 
       // All bellow are ok.
       // {
@@ -402,7 +402,7 @@ export default {
       //     until: '2019-02-01'
       //   }
       // }
-    ],
+    ]
   }),
 
   methods: {
