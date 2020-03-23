@@ -7,7 +7,7 @@ transition-group.vuecal__cell(
   :style="cellStyles")
   .vuecal__flex.vuecal__cell-content(
     v-for="(split, i) in (splitsCount ? splits : 1)"
-    :key="options.transitions ? `${view}-${data.content}-${i}` : i"
+    :key="options.transitions ? `${view.id}-${data.content}-${i}` : i"
     :class="splitsCount && `vuecal__cell-split ${split.class}${highlightedSplit === split.id ? ' vuecal__cell-split--highlighted' : ''}`"
     :data-split="splitsCount ? split.id : false"
     column
@@ -20,10 +20,10 @@ transition-group.vuecal__cell(
     @click="!isDisabled && selectCell($event)"
     @dblclick="!isDisabled && onCellDblClick($event)"
     @contextmenu="!isDisabled && options.cellContextmenu && onCellContextMenu($event)"
-    @dragenter="!isDisabled && editEvents.drag && cellDragEnter($event, $data, data.startDate, $parent)"
-    @dragover="!isDisabled && editEvents.drag && cellDragOver($event, $data, data.startDate, $parent, splitsCount ? split.id : null)"
-    @dragleave="!isDisabled && editEvents.drag && cellDragLeave($event, $data, data.startDate, $parent)"
-    @drop="!isDisabled && editEvents.drag && cellDragDrop($event, $data, data.startDate, $parent, splitsCount ? split.id : null)")
+    @dragenter="!isDisabled && editEvents.drag && dnd && dnd.cellDragEnter($event, $data, data.startDate)"
+    @dragover="!isDisabled && editEvents.drag && dnd && dnd.cellDragOver($event, $data, data.startDate, splitsCount ? split.id : null)"
+    @dragleave="!isDisabled && editEvents.drag && dnd && dnd.cellDragLeave($event, $data, data.startDate)"
+    @drop="!isDisabled && editEvents.drag && dnd && dnd.cellDragDrop($event, $data, data.startDate, splitsCount ? split.id : null)")
     .vuecal__special-hours(
       v-if="isWeekOrDayView && !allDay && specialHours.from !== null"
       :class="`vuecal__special-hours--day${specialHours.day} ${specialHours.class}`"
@@ -35,10 +35,9 @@ transition-group.vuecal__cell(
       :select-cell="$event => selectCell($event, true)"
       :split="splitsCount ? split : false")
     .vuecal__cell-events(
-      v-if="eventsCount && (isWeekOrDayView || (view === 'month' && options.eventsOnMonthView))")
+      v-if="eventsCount && (isWeekOrDayView || (view.id === 'month' && options.eventsOnMonthView))")
       event(
         v-for="(event, j) in (splitsCount ? split.events : events)" :key="j"
-        :vuecal="$parent"
         :cell-formatted-date="data.formattedDate"
         :event="event"
         :all-day="allDay"
@@ -51,18 +50,15 @@ transition-group.vuecal__cell(
   .vuecal__now-line(
     v-if="timelineVisible"
     :style="`top: ${todaysTimePosition}px`"
-    :key="options.transitions ? `${view}-now-line` : 'now-line'"
-    :title="$parent.now.formatTime()")
+    :key="options.transitions ? `${view.id}-now-line` : 'now-line'"
+    :title="vuecal.now.formatTime()")
 </template>
 
 <script>
-import { dateToMinutes } from './date-utils'
-import { selectCell, keyPressEnterCell } from './cell-utils'
-import { createAnEvent, updateEventPosition, checkCellOverlappingEvents, eventInRange, recurringEventInRange } from './event-utils'
-import { cellDragOver, cellDragEnter, cellDragLeave, cellDragDrop } from './drag-and-drop'
 import Event from './event'
 
 export default {
+  inject: ['vuecal', 'utils', 'modules', 'view', 'domEvents'],
   components: { Event },
   props: {
     // Vue-cal main component options (props).
@@ -89,7 +85,7 @@ export default {
   methods: {
     getSplitAtCursor (DOMEvent) {
       const split = (DOMEvent.target.classList.contains('vuecal__cell-split') && DOMEvent.target) ||
-          this.$parent.findAncestor(DOMEvent.target, 'vuecal__cell-split')
+        this.vuecal.findAncestor(DOMEvent.target, 'vuecal__cell-split')
       return (split && split.attributes['data-split'].value) || null
     },
     checkCellOverlappingEvents () {
@@ -100,12 +96,12 @@ export default {
           this.cellOverlapsStreak = 1
         }
         // If only 1 event remains re-init the overlaps.
-        else [this.cellOverlaps, this.cellOverlapsStreak] = checkCellOverlappingEvents(this.events, this.options)
+        else [this.cellOverlaps, this.cellOverlapsStreak] = this.utils.event.checkCellOverlappingEvents(this.events, this.options)
       }
     },
 
     isDOMElementAnEvent (el) {
-      return this.$parent.isDOMElementAnEvent(el)
+      return this.vuecal.isDOMElementAnEvent(el)
     },
 
     selectCell (DOMEvent, force = false) {
@@ -114,7 +110,7 @@ export default {
       // If splitting days, also return the clicked split on cell click when emitting event.
       const split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
 
-      selectCell(force, this.$parent, this.timeAtCursor, split)
+      this.utils.cell.selectCell(force, this.timeAtCursor, split)
       this.timeAtCursor = null
     },
 
@@ -124,7 +120,7 @@ export default {
       // If splitting days, also return the clicked split on cell keypress when emitting event.
       const split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
 
-      keyPressEnterCell(this.$parent, this.timeAtCursor, split)
+      this.utils.cell.keyPressEnterCell(this.timeAtCursor, split)
       this.timeAtCursor = null
     },
 
@@ -143,7 +139,7 @@ export default {
         // Cell-focus event returns the cell start date (at midnight) if triggered from tab key,
         // or cursor coords time if clicked.
         const date = this.timeAtCursor || this.data.startDate
-        this.$parent.$emit('cell-focus', split ? { date, split } : date)
+        this.vuecal.$emit('cell-focus', split ? { date, split } : date)
       }
     },
 
@@ -158,22 +154,22 @@ export default {
       this.domEvents.cancelClickEventCreation = false
 
       this.timeAtCursor = new Date(this.data.startDate)
-      this.timeAtCursor.setMinutes(this.$parent.minutesAtCursor(DOMEvent).minutes)
+      this.timeAtCursor.setMinutes(this.vuecal.minutesAtCursor(DOMEvent).minutes)
 
       const mouseDownOnEvent = this.isDOMElementAnEvent(DOMEvent.target)
       // Unfocus an event if any is focused and clicking on cell outside of an event.
       if (!mouseDownOnEvent && focusAnEvent._eid) {
-        (this.$parent.view.events.find(e => e._eid === focusAnEvent._eid) || {}).focused = false
+        (this.view.events.find(e => e._eid === focusAnEvent._eid) || {}).focused = false
       }
 
       // If the cellClickHold option is true and not mousedown on an event, click & hold to create an event.
       if (this.editEvents.create && this.options.cellClickHold && !mouseDownOnEvent &&
-        ['month', 'week', 'day'].includes(this.view)) {
-        clickHoldACell.cellId = `${this.$parent._uid}_${this.data.formattedDate}`
+        ['month', 'week', 'day'].includes(this.view.id)) {
+        clickHoldACell.cellId = `${this.vuecal._uid}_${this.data.formattedDate}`
         clickHoldACell.split = split
         clickHoldACell.timeoutId = setTimeout(() => {
           if (clickHoldACell.cellId && !this.domEvents.cancelClickEventCreation) {
-            createAnEvent(this.timeAtCursor, null, clickHoldACell.split ? { split: clickHoldACell.split } : {}, this.$parent)
+            this.utils.event.createAnEvent(this.timeAtCursor, null, clickHoldACell.split ? { split: clickHoldACell.split } : {})
           }
         }, clickHoldACell.timeout)
       }
@@ -186,14 +182,14 @@ export default {
 
     onCellDblClick (DOMEvent) {
       const date = new Date(this.data.startDate)
-      date.setMinutes(this.$parent.minutesAtCursor(DOMEvent).minutes)
+      date.setMinutes(this.vuecal.minutesAtCursor(DOMEvent).minutes)
 
       // If splitting days, also return the clicked split on cell dblclick when emitting event.
       const split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
 
-      this.$parent.$emit('cell-dblclick', split ? { date, split } : date)
+      this.vuecal.$emit('cell-dblclick', split ? { date, split } : date)
 
-      if (this.options.dblclickToNavigate) this.$parent.switchToNarrowerView()
+      if (this.options.dblclickToNavigate) this.vuecal.switchToNarrowerView()
     },
 
     onCellContextMenu (DOMEvent) {
@@ -201,24 +197,23 @@ export default {
       DOMEvent.preventDefault()
 
       const date = new Date(this.data.startDate)
-      const { cursorCoords, minutes } = this.$parent.minutesAtCursor(DOMEvent)
+      const { cursorCoords, minutes } = this.vuecal.minutesAtCursor(DOMEvent)
       date.setMinutes(minutes)
 
       // If splitting days, also return the clicked split on cell contextmenu when emitting event.
       const split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
 
-      this.$parent.$emit('cell-contextmenu', { date, ...cursorCoords, ...(split || {}) })
-    },
-
-    cellDragOver,
-    cellDragEnter,
-    cellDragLeave,
-    cellDragDrop
+      this.vuecal.$emit('cell-contextmenu', { date, ...cursorCoords, ...(split || {}) })
+    }
   },
 
   computed: {
+    // Drag & drop module.
+    dnd () {
+      return this.modules.dnd
+    },
     nowInMinutes () {
-      return dateToMinutes(this.$parent.now)
+      return this.utils.date.dateToMinutes(this.vuecal.now)
     },
     isBeforeMinDate () {
       return this.minTimestamp !== null && this.minTimestamp > this.data.endDate.getTime()
@@ -234,12 +229,12 @@ export default {
     isSelected: {
       get () {
         let selected = false
-        const { selectedDate } = this.$parent.view
+        const { selectedDate } = this.view
 
-        if (this.view === 'years') {
+        if (this.view.id === 'years') {
           selected = selectedDate.getFullYear() === this.data.startDate.getFullYear()
         }
-        else if (this.view === 'year') {
+        else if (this.view.id === 'year') {
           selected = (selectedDate.getFullYear() === this.data.startDate.getFullYear() &&
             selectedDate.getMonth() === this.data.startDate.getMonth())
         }
@@ -248,29 +243,15 @@ export default {
         return selected
       },
       set (date) {
-        this.$parent.view.selectedDate = date
+        this.view.selectedDate = date
       }
-    },
-    domEvents: {
-      get () {
-        return this.$parent.domEvents
-      },
-      set (object) {
-        this.$parent.domEvents = object
-      }
-    },
-    texts () {
-      return this.$parent.texts
-    },
-    view () {
-      return this.$parent.view.id
     },
     // Cache result for performance.
     isWeekOrDayView () {
-      return ['week', 'day'].includes(this.view)
+      return ['week', 'day'].includes(this.view.id)
     },
     transitionDirection () {
-      return this.$parent.transitionDirection
+      return this.vuecal.transitionDirection
     },
     specialHours () {
       let { from, to } = this.data.specialHours
@@ -287,17 +268,17 @@ export default {
       let events = []
 
       // Calculate events on month/week/day views or years/year if eventsCountOnYearView.
-      if (!(['years', 'year'].includes(this.view) && !this.options.eventsCountOnYearView)) {
-        // Means that when $parent.view.events changes all the cells will be looking up new value. :/
+      if (!(['years', 'year'].includes(this.view.id) && !this.options.eventsCountOnYearView)) {
+        // Means that when vuecal.view.events changes all the cells will be looking up new value. :/
         // Also clone array to prevent modifying original.
-        events = this.$parent.view.events.slice(0)
+        events = this.view.events.slice(0)
 
-        if (this.view === 'month') events.push(...this.$parent.view.outOfScopeEvents)
+        if (this.view.id === 'month') events.push(...this.view.outOfScopeEvents)
 
         // Only keep events in cell time range.
-        events = events.filter(e => eventInRange(e, cellStart, cellEnd))
+        events = events.filter(e => this.utils.event.eventInRange(e, cellStart, cellEnd))
 
-        if (this.options.showAllDayEvents && this.view !== 'month') events = events.filter(e => !!e.allDay === this.allDay)
+        if (this.options.showAllDayEvents && this.view.id !== 'month') events = events.filter(e => !!e.allDay === this.allDay)
 
         // From events in view, filter the ones that are out of `time-from`-`time-to` range in this cell.
         if (this.options.time && this.isWeekOrDayView && !this.allDay) {
@@ -307,7 +288,7 @@ export default {
             const segment = (e.daysCount > 1 && e.segments[this.data.formattedDate]) || {}
             const singleDayInRange = e.daysCount === 1 && e.startTimeMinutes < timeTo && e.endTimeMinutes > timeFrom
             const multipleDayInRange = e.daysCount > 1 && (segment.startTimeMinutes < timeTo && segment.endTimeMinutes > timeFrom)
-            const recurrMultDayInRange = e.daysCount > 1 && e.repeat && recurringEventInRange(e, cellStart, cellEnd)
+            const recurrMultDayInRange = e.daysCount > 1 && e.repeat && this.utils.event.recurringEventInRange(e, cellStart, cellEnd)
             return (e.allDay || singleDayInRange || multipleDayInRange || recurrMultDayInRange)
           })
         }
@@ -320,7 +301,7 @@ export default {
             // @todo: Do we want this or not?
             const eventToUpdate = (event.segments && event.segments[this.data.formattedDate]) || event
 
-            if ((event.startTimeMinutes || event.endTimeMinutes) && !event.allDay) updateEventPosition(eventToUpdate, this.$parent)
+            if ((event.startTimeMinutes || event.endTimeMinutes) && !event.allDay) this.utils.event.updateEventPosition(eventToUpdate)
           })
 
           // Sort events in chronological order.
@@ -351,7 +332,7 @@ export default {
     splits () {
       return this.cellSplits.map((item, i) => {
         const events = this.events.filter(e => e.split === item.id)
-        const [overlaps, streak] = checkCellOverlappingEvents(events.filter(e => !e.background && !e.allDay), this.options)
+        const [overlaps, streak] = this.utils.event.checkCellOverlappingEvents(events.filter(e => !e.background && !e.allDay), this.options)
         return {
           ...item,
           overlaps,

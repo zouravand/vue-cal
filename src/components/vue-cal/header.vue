@@ -6,26 +6,26 @@
     aria-label="Calendar views navigation")
     button.vuecal__view-btn(
       v-if="v.enabled"
-      :class="{ 'vuecal__view-btn--active': viewProps.view.id === id, 'vuecal__view-btn--highlighted': highlightedControl === id }"
+      :class="{ 'vuecal__view-btn--active': view.id === id, 'vuecal__view-btn--highlighted': highlightedControl === id }"
       v-for="(v, id) in viewProps.views"
-      @dragenter="editEvents.drag && viewSelectorDragEnter($event, id, $parent, $data)"
-      @dragleave="editEvents.drag && viewSelectorDragLeave($event, id, $parent, $data)"
-      @click="$parent.switchView(id, null, true)"
+      @dragenter="editEvents.drag && dnd && dnd.viewSelectorDragEnter($event, id, $data)"
+      @dragleave="editEvents.drag && dnd && dnd.viewSelectorDragLeave($event, id, $data)"
+      @click="switchView(id, null, true)"
       :aria-label="`${v.label} view`") {{ v.label }}
   .vuecal__title-bar(v-if="!options.hideTitleBar")
     button.vuecal__arrow.vuecal__arrow--prev(
       :class="{ 'vuecal__arrow--highlighted': highlightedControl === 'previous' }"
       @click="previous"
-      @dragenter="editEvents.drag && viewSelectorDragEnter($event, 'previous', $parent, $data)"
-      @dragleave="editEvents.drag && viewSelectorDragLeave($event, 'previous', $parent, $data)"
-      :aria-label="`Previous ${viewProps.view.id}`")
+      @dragenter="editEvents.drag && dnd && dnd.viewSelectorDragEnter($event, 'previous', $data)"
+      @dragleave="editEvents.drag && dnd && dnd.viewSelectorDragLeave($event, 'previous', $data)"
+      :aria-label="`Previous ${view.id}`")
       slot(name="arrow-prev")
     .vuecal__flex.vuecal__title(grow)
       //- Best way to disable transition is to convert it to simple div tag.
       component(:is="options.transitions ? 'transition' : 'div'" :name="`slide-fade--${transitionDirection}`")
         component(
           :is="!!broaderView ? 'button' : 'span'"
-          :key="`${viewProps.view.id}${viewProps.view.startDate.toString()}`"
+          :key="`${view.id}${view.startDate.toString()}`"
           @click="switchToBroaderView"
           :aria-label="!!broaderView ? `Go to ${broaderView} view` : false")
           slot(name="title")
@@ -33,21 +33,19 @@
       v-if="options.todayButton"
       :class="{ 'vuecal__today-btn--highlighted': highlightedControl === 'today' }"
       @click="goToToday"
-      @dragenter="editEvents.drag && viewSelectorDragEnter($event, 'today', $parent, $data)"
-      @dragleave="editEvents.drag && viewSelectorDragLeave($event, 'today', $parent, $data)"
+      @dragenter="editEvents.drag && dnd && dnd.viewSelectorDragEnter($event, 'today', $data)"
+      @dragleave="editEvents.drag && dnd && dnd.viewSelectorDragLeave($event, 'today', $data)"
       aria-label="Today")
       slot(name="today-button")
     button.vuecal__arrow.vuecal__arrow--next(
       :class="{ 'vuecal__arrow--highlighted': highlightedControl === 'next' }"
       @click="next"
-      @dragenter="editEvents.drag && viewSelectorDragEnter($event, 'next', $parent, $data)"
-      @dragleave="editEvents.drag && viewSelectorDragLeave($event, 'next', $parent, $data)"
-      :aria-label="`Next ${viewProps.view.id}`")
+      @dragenter="editEvents.drag && dnd && dnd.viewSelectorDragEnter($event, 'next', $data)"
+      @dragleave="editEvents.drag && dnd && dnd.viewSelectorDragLeave($event, 'next', $data)"
+      :aria-label="`Next ${view.id}`")
       slot(name="arrow-next")
   weekdays-headings(
     v-if="viewProps.weekDaysInHeader"
-    :vuecal="$parent"
-    :view="viewProps.view"
     :week-days="weekDays"
     :transition-direction="transitionDirection"
     :switch-to-narrower-view="switchToNarrowerView")
@@ -56,15 +54,15 @@
 
   //- Sticky split-days headers on day view only.
   transition(:name="`slide-fade--${transitionDirection}`")
-    .vuecal__flex.vuecal__split-days-headers(v-if="viewProps.view.id === 'day' && hasSplits && options.stickySplitLabels && !options.minSplitWidth")
+    .vuecal__flex.vuecal__split-days-headers(v-if="view.id === 'day' && hasSplits && options.stickySplitLabels && !options.minSplitWidth")
       .day-split-header(v-for="(split, i) in daySplits" :key="i" :class="split.class || false") {{ split.label }}
 </template>
 
 <script>
 import WeekdaysHeadings from './weekdays-headings'
-import { viewSelectorDragEnter, viewSelectorDragLeave } from './drag-and-drop'
 
 export default {
+  inject: ['vuecal', 'previous', 'next', 'switchView', 'updateSelectedDate', 'modules', 'view'],
   components: { WeekdaysHeadings },
   props: {
     // Vuecal main component options (props).
@@ -82,44 +80,37 @@ export default {
   }),
 
   methods: {
-    previous () {
-      this.$parent.previousNext(false)
-    },
-
-    next () {
-      this.$parent.previousNext()
-    },
-
     goToToday () {
       // Last midnight.
-      this.$parent.updateSelectedDate(new Date(new Date().setHours(0, 0, 0, 0)))
+      this.updateSelectedDate(new Date(new Date().setHours(0, 0, 0, 0)))
     },
 
     switchToBroaderView () {
       this.transitionDirection = 'left'
 
-      if (this.broaderView) this.$parent.switchView(this.broaderView)
-    },
-
-    viewSelectorDragEnter,
-    viewSelectorDragLeave
+      if (this.broaderView) this.switchView(this.broaderView)
+    }
   },
 
   computed: {
     transitionDirection: {
       get () {
-        return this.$parent.transitionDirection
+        return this.vuecal.transitionDirection
       },
       set (direction) {
-        this.$parent.transitionDirection = direction
+        this.vuecal.transitionDirection = direction
       }
     },
     broaderView () {
       let views = Object.keys(this.viewProps.views)
-      views = views.slice(0, views.indexOf(this.viewProps.view.id))
+      views = views.slice(0, views.indexOf(this.view.id))
       views.reverse()
 
       return views.find(v => this.viewProps.views[v].enabled)
+    },
+    // Drag & drop module.
+    dnd () {
+      return this.modules.dnd
     }
   }
 }
