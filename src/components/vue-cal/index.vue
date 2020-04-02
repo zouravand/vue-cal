@@ -35,8 +35,8 @@
           .vuecal__flex.vuecal__cells(
             :class="`${view.id}-view`"
             grow
-            :wrap="(!minCellWidth && !minSplitWidth) || view.id !== 'week'"
-            :column="!!minCellWidth || !!minSplitWidth")
+            :wrap="(!minCellWidth && !(hasSplits && minSplitWidth)) || view.id !== 'week'"
+            :column="!!minCellWidth || !!(hasSplits && minSplitWidth)")
             vuecal-cell(
               v-for="(cell, i) in viewCells"
               :key="i"
@@ -44,6 +44,7 @@
               :edit-events="editEvents"
               :data="cell"
               :all-day="true"
+              :cell-width="hideWeekdays.length && ['month', 'week'].includes(view.id) && cellWidth"
               :min-timestamp="minTimestamp"
               :max-timestamp="maxTimestamp"
               :cell-splits="hasSplits && daySplits || []")
@@ -72,8 +73,8 @@
             .vuecal__flex.vuecal__cells(
               :class="`${view.id}-view`"
               grow
-              :wrap="(!minCellWidth && !minSplitWidth) || view.id !== 'week'"
-              :column="!!minCellWidth || !!minSplitWidth")
+              :wrap="(!minCellWidth && !(hasSplits && minSplitWidth)) || view.id !== 'week'"
+              :column="!!minCellWidth || !!(hasSplits && minSplitWidth)")
               //- Only for minCellWidth or minSplitWidth on week view.
               weekdays-headings(
                 v-if="(minCellWidth || (hasSplits && minSplitWidth)) && view.id === 'week'"
@@ -90,7 +91,7 @@
               .vuecal__flex(
                 ref="cells"
                 grow
-                :wrap="(!minCellWidth && !minSplitWidth) || view.id !== 'week'"
+                :wrap="(!minCellWidth && !(hasSplits && minSplitWidth)) || view.id !== 'week'"
                 :style="contentMinWidth ? `min-width: ${contentMinWidth}px` : ''")
                 vuecal-cell(
                   v-for="(cell, i) in viewCells"
@@ -1194,7 +1195,10 @@ export default {
       return weekDays
     },
     weekDaysInHeader () {
-      return this.view.id === 'month' || (this.view.id === 'week' && !this.minCellWidth && !this.minSplitWidth)
+      return (
+        this.view.id === 'month' ||
+        // hasSplits check is important here in case the user toggles the splits but keep minSplitWidth.
+        (this.view.id === 'week' && !this.minCellWidth && !(this.hasSplits && this.minSplitWidth)))
     },
     months () {
       return this.texts.months.map(month => ({ label: month }))
