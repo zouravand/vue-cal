@@ -190,11 +190,11 @@ export default {
     }
   },
   props: {
+    activeView: { type: String, default: 'week' },
     cellClickHold: { type: Boolean, default: true },
     cellContextmenu: { type: Boolean, default: false },
     clickToNavigate: { type: Boolean, default: false },
     dblclickToNavigate: { type: Boolean, default: true },
-    defaultView: { type: String, default: 'week' },
     disableDatePrototypes: { type: Boolean, default: false },
     disableViews: { type: Array, default: () => [] },
     editableEvents: { type: [Boolean, Object], default: false },
@@ -360,11 +360,7 @@ export default {
      */
     switchToNarrowerView (date = null) {
       this.transitionDirection = 'right'
-
-      let views = Object.keys(this.views)
-      views = views.slice(views.indexOf(this.view.id) + 1)
-      const view = views.find(v => this.views[v].enabled)
-
+      const view = this.enabledViews[this.enabledViews.indexOf(this.view.id) + 1]
       if (view) this.switchView(view, date)
     },
 
@@ -379,9 +375,12 @@ export default {
      */
     switchView (view, date = null, fromViewSelector = false) {
       const ud = this.utils.date
+      // This is user to prevent firing the custom event twice when syncing activeView.
+      const viewDateBeforeChange = this.view.startDate && this.view.startDate.getTime()
 
       if (this.transitions && fromViewSelector) {
-        const views = Object.keys(this.views)
+        if (this.view.id === view) return
+        const views = this.enabledViews
         this.transitionDirection = views.indexOf(this.view.id) > views.indexOf(view) ? 'left' : 'right'
       }
 
@@ -465,6 +464,13 @@ export default {
       }
 
       this.addEventsToView()
+
+      // Prevent firing the `view-change` event twice (if using .sync).
+      const viewDate = this.view.startDate && this.view.startDate.getTime()
+      if (this.view.id === view && viewDate === viewDateBeforeChange) return
+
+      // Emit events to outside of Vue Cal and update the activeView (if using .sync).
+      this.$emit('update:activeView', view)
 
       if (this.ready) {
         const startDate = this.view.startDate
@@ -1019,11 +1025,11 @@ export default {
     // Init the array of events, then keep listening for changes in watcher.
     this.updateMutableEvents(this.events)
 
-    this.view.id = this.defaultView
+    this.view.id = this.activeView
     if (this.selectedDate) this.updateSelectedDate(this.selectedDate)
     else {
       this.view.selectedDate = new Date()
-      this.switchView(this.defaultView)
+      this.switchView(this.activeView)
     }
 
     // Timers are expensive, this should only trigger on demand.
@@ -1110,6 +1116,9 @@ export default {
         week: { label: this.texts.week, enabled: !this.disableViews.includes('week') },
         day: { label: this.texts.day, enabled: !this.disableViews.includes('day') }
       }
+    },
+    enabledViews () {
+      return Object.keys(this.views).filter(view => this.views[view].enabled)
     },
     hasTimeColumn () {
       return this.time && ['week', 'day'].includes(this.view.id)
@@ -1317,14 +1326,14 @@ export default {
               endDate,
               content: startDate.getDate(),
               today: isToday,
-              outOfScope: startDate.getMonth() !== month
+              outOfScope: startDate.getMonth() !== month,
+              class: `vuecal__cell--day${startDate.getDay() || 7}`
             }
           })
 
           if (this.hideWeekends || this.hideWeekdays.length) {
             cells = cells.filter(cell => {
-              let day = cell.startDate.getDay()
-              if (!day) day = 7 // Put Sunday at position 7 instead of 0.
+              const day = cell.startDate.getDay() || 7 // Put Sunday at position 7 instead of 0.
 
               return !((this.hideWeekends && day >= 6) ||
               (this.hideWeekdays.length && this.hideWeekdays.includes(day)))
@@ -1341,7 +1350,7 @@ export default {
             const startDate = ud.addDays(firstDayOfWeek, i)
             const endDate = new Date(startDate)
             endDate.setHours(23, 59, 59, 0) // End at 23:59:59.
-            const dayOfWeek = (startDate.getDay() - 1 + 7) % 7 // Day of the week from 0 to 6 with 6 = Sunday.
+            const dayOfWeek = (startDate.getDay() || 7) - 1 // Day of the week from 0 to 6 with 6 = Sunday.
 
             return {
               startDate,
@@ -1358,7 +1367,7 @@ export default {
           const startDate = this.view.startDate
           const endDate = new Date(this.view.startDate)
           endDate.setHours(23, 59, 59, 0) // End at 23:59:59.
-          const dayOfWeek = (startDate.getDay() - 1 + 7) % 7 // Day of the week from 0 to 6 with 6 = Sunday.
+          const dayOfWeek = (startDate.getDay() || 7) - 1 // Day of the week from 0 to 6 with 6 = Sunday.
 
           cells = [{
             startDate,
@@ -1417,6 +1426,9 @@ export default {
     },
     selectedDate (date) {
       this.updateSelectedDate(date)
+    },
+    activeView (newVal) {
+      this.switchView(newVal)
     }
   }
 }
