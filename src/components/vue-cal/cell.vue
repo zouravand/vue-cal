@@ -84,9 +84,14 @@ export default {
 
   methods: {
     getSplitAtCursor (DOMEvent) {
-      const split = (DOMEvent.target.classList.contains('vuecal__cell-split') && DOMEvent.target) ||
-        this.vuecal.findAncestor(DOMEvent.target, 'vuecal__cell-split')
-      return (split && split.attributes['data-split'].value) || null
+      let split = (DOMEvent.target.classList.contains('vuecal__cell-split') && DOMEvent.target) ||
+      this.vuecal.findAncestor(DOMEvent.target, 'vuecal__cell-split')
+      if (split) {
+        split = split.attributes['data-split'].value
+        // Convert to a numeric value if split id is a number.
+        if (parseInt(split).toString() === split.toString()) split = parseInt(split)
+      }
+      return split || null
     },
     splitClasses (split) {
       return {
@@ -160,10 +165,11 @@ export default {
       // and cancel event creation.
       this.domEvents.cancelClickEventCreation = false
       // Also reinit this var on each mousedown.
-      this.domEvents.clickHoldACell.eventCreated = false
+      clickHoldACell.eventCreated = false
 
       this.timeAtCursor = new Date(this.data.startDate)
-      this.timeAtCursor.setMinutes(this.vuecal.minutesAtCursor(DOMEvent).minutes)
+      const { minutes, cursorCoords: { y } } = this.vuecal.minutesAtCursor(DOMEvent)
+      this.timeAtCursor.setMinutes(minutes)
 
       const mouseDownOnEvent = this.isDOMElementAnEvent(DOMEvent.target)
       // Unfocus an event if any is focused and clicking on cell outside of an event.
@@ -171,23 +177,56 @@ export default {
         (this.view.events.find(e => e._eid === focusAnEvent._eid) || {}).focused = false
       }
 
-      // If the cellClickHold option is true and not mousedown on an event, click & hold to create an event.
-      if (this.editEvents.create && this.options.cellClickHold && !mouseDownOnEvent &&
-        ['month', 'week', 'day'].includes(this.view.id)) {
-        clickHoldACell.cellId = `${this.vuecal._uid}_${this.data.formattedDate}`
-        clickHoldACell.split = split
-        clickHoldACell.timeoutId = setTimeout(() => {
-          if (clickHoldACell.cellId && !this.domEvents.cancelClickEventCreation) {
-            const { _eid } = this.utils.event.createAnEvent(
-              this.timeAtCursor,
-              null,
-              clickHoldACell.split ? { split: clickHoldACell.split } : {}
-            )
+      // Only if event creation is allowed and mousedown is on a cell (not on event).
+      if (this.editEvents.create && !mouseDownOnEvent) this.setUpEventCreation(DOMEvent, y)
+    },
 
-            clickHoldACell.eventCreated = _eid
-          }
-        }, clickHoldACell.timeout)
+    setUpEventCreation (DOMEvent, startCursorY) {
+      // If dragToCreateEvent is true, start the event creation from dragging
+      // only on week and day views (doesn't make sense on month view).
+      if (this.options.dragToCreateEvent && ['week', 'day'].includes(this.view.id)) {
+        const { dragCreateAnEvent } = this.domEvents
+        dragCreateAnEvent.startCursorY = startCursorY
+
+        // If splitting days, store the clicked split to create an event in it from the global
+        // mousemove handler in index.vue.
+        dragCreateAnEvent.split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
+
+        // Save the time at cursor on initial mousedown.
+        dragCreateAnEvent.start = this.timeAtCursor
+
+        // If snapToTime, set the start to the closest intervaled number.
+        if (this.options.snapToTime) {
+          let timeMinutes = this.timeAtCursor.getHours() * 60 + this.timeAtCursor.getMinutes()
+          const plusHalfSnapTime = timeMinutes + this.options.snapToTime / 2
+          timeMinutes = plusHalfSnapTime - (plusHalfSnapTime % this.options.snapToTime)
+
+          dragCreateAnEvent.start.setHours(0, timeMinutes, 0, 0)
+        }
       }
+
+      // If the cellClickHold option is true and not mousedown on an event, click & hold to create an event.
+      else if (this.options.cellClickHold && ['month', 'week', 'day'].includes(this.view.id)) {
+        this.setUpCellHoldTimer()
+      }
+    },
+
+    // When click & holding a cell, and if allowed, set a timeout to create an event (can be cancelled).
+    setUpCellHoldTimer (split) {
+      const { clickHoldACell } = this.domEvents
+      clickHoldACell.cellId = `${this.vuecal._uid}_${this.data.formattedDate}`
+      clickHoldACell.split = split
+      clickHoldACell.timeoutId = setTimeout(() => {
+        if (clickHoldACell.cellId && !this.domEvents.cancelClickEventCreation) {
+          const { _eid } = this.utils.event.createAnEvent(
+            this.timeAtCursor,
+            null,
+            clickHoldACell.split ? { split: clickHoldACell.split } : {}
+          )
+
+          clickHoldACell.eventCreated = _eid
+        }
+      }, clickHoldACell.timeout)
     },
 
     onCellTouchStart (DOMEvent, split = null) {

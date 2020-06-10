@@ -208,6 +208,10 @@ export default {
     dblclickToNavigate: { type: Boolean, default: true },
     disableDatePrototypes: { type: Boolean, default: false },
     disableViews: { type: Array, default: () => [] },
+    dragToCreateEvent: { type: Boolean, default: true },
+    // Start a drag creation after dragging a certain amount of pixels.
+    // This prevents drag creation by mistake when you want to navigate.
+    dragToCreateThreshold: { type: Number, default: 15 },
     editableEvents: { type: [Boolean, Object], default: false },
     events: { type: Array, default: () => [] },
     eventsCountOnYearView: { type: Boolean, default: false },
@@ -303,6 +307,12 @@ export default {
         dragAnEvent: {
           // Only one at a time, only needed for vuecal dragging-event class.
           _eid: null
+        },
+        dragCreateAnEvent: {
+          startCursorY: null,
+          start: null, // The cell date where we start the drag.
+          split: null,
+          event: null
         },
         focusAnEvent: {
           _eid: null // Only one at a time.
@@ -637,70 +647,14 @@ export default {
      * @param {Object} e the native DOM event object.
      */
     onMouseMove (e) {
-      const { resizeAnEvent, dragAnEvent } = this.domEvents
-      if (resizeAnEvent._eid === null && dragAnEvent._eid === null) return
-
-      // Destructuring class method loses the `this` context.
-      // const { formatDateLite, countDays } = this.utils.date
-      const { date: ud, event: ue } = this.utils
+      const { resizeAnEvent, dragAnEvent, dragCreateAnEvent } = this.domEvents
+      if (resizeAnEvent._eid === null && dragAnEvent._eid === null && !dragCreateAnEvent.start) return
 
       e.preventDefault()
 
-      if (resizeAnEvent._eid) {
-        const event = this.view.events.find(e => e._eid === resizeAnEvent._eid) || { segments: {} }
-        const { minutes, cursorCoords } = this.minutesAtCursor(e)
-        const segment = event.segments && event.segments[resizeAnEvent.segment]
+      if (resizeAnEvent._eid) this.eventResizing(e)
 
-        // Don't allow time above 24 hours.
-        let newEndTimeMins = Math.min(minutes, minutesInADay)
-        // Prevent reducing event duration to less than 1 min so it does not disappear.
-        newEndTimeMins = Math.max(newEndTimeMins, this.timeFrom + 1, (segment || event).startTimeMinutes + 1)
-        event.endTimeMinutes = resizeAnEvent.endTimeMinutes = newEndTimeMins
-
-        // On resize, snap to time every X minutes if the option is on.
-        if (this.snapToTime) {
-          const plusHalfSnapTime = (event.endTimeMinutes + this.snapToTime / 2)
-          event.endTimeMinutes = plusHalfSnapTime - (plusHalfSnapTime % this.snapToTime)
-        }
-
-        if (segment) segment.endTimeMinutes = event.endTimeMinutes
-
-        event.end.setHours(
-          0,
-          event.endTimeMinutes,
-          event.endTimeMinutes === minutesInADay ? -1 : 0, // Remove 1 second if time is 24:00.
-          0
-        )
-
-        // Resize events horizontally if resize-x is enabled (add/remove segments).
-        if (this.resizeX && this.isWeekView) {
-          event.daysCount = ud.countDays(event.start, event.end)
-          const cells = this.$refs.cells
-          const cellWidth = cells.offsetWidth / cells.childElementCount
-          const endCell = Math.floor(cursorCoords.x / cellWidth)
-
-          if (resizeAnEvent.startCell === null) {
-            resizeAnEvent.startCell = endCell - (event.daysCount - 1)
-          }
-          if (resizeAnEvent.endCell !== endCell) {
-            resizeAnEvent.endCell = endCell
-
-            const newEnd = ud.addDays(event.start, endCell - resizeAnEvent.startCell)
-            const newDaysCount = Math.max(ud.countDays(event.start, newEnd), 1) // Don't accept 0 and negative values.
-
-            if (newDaysCount !== event.daysCount) {
-              // Check that all segments are up to date.
-              let lastSegmentFormattedDate = null
-              if (newDaysCount > event.daysCount) lastSegmentFormattedDate = ue.addEventSegment(event)
-              else lastSegmentFormattedDate = ue.removeEventSegment(event)
-              resizeAnEvent.segment = lastSegmentFormattedDate
-              event.endTimeMinutes += 0.001 // Force updating the current event.
-            }
-          }
-        }
-
-        this.$emit('event-resizing', { _eid: event._eid, end: event.end, endTimeMinutes: event.endTimeMinutes })
-      }
+      else if (this.dragToCreateEvent && dragCreateAnEvent.start) this.eventDragCreation(e)
     },
 
     /**
@@ -712,10 +666,17 @@ export default {
      * @param {Object} e the native DOM event object.
      */
     onMouseUp (e) {
-      const { focusAnEvent, resizeAnEvent, clickHoldAnEvent, clickHoldACell } = this.domEvents
+      const {
+        focusAnEvent,
+        resizeAnEvent,
+        clickHoldAnEvent,
+        clickHoldACell,
+        dragCreateAnEvent
+      } = this.domEvents
       const { _eid: isClickHoldingEvent } = clickHoldAnEvent
       const { _eid: wasResizing } = resizeAnEvent
       let hasResized = false
+      const { event: dragCreatedEvent, start: dragCreateStarted } = dragCreateAnEvent
       const mouseUpOnEvent = this.isDOMElementAnEvent(e.target)
 
       if (mouseUpOnEvent) this.domEvents.cancelClickEventCreation = true
@@ -760,6 +721,19 @@ export default {
         resizeAnEvent.endCell = null
       }
 
+      else if (dragCreateStarted) {
+        // The drag create might be started but not completed due to threshold never reached.
+        if (dragCreatedEvent) {
+          this.emitWithEvent('event-drag-create', dragCreatedEvent)
+          dragCreateAnEvent.event.resizing = false // Remove the CSS resizing class.
+        }
+
+        // End the drag creation process.
+        dragCreateAnEvent.start = null
+        dragCreateAnEvent.split = null
+        dragCreateAnEvent.event = null
+      }
+
       // If not mouse up on an event, unfocus any event except if just dragged.
       if (!mouseUpOnEvent && !wasResizing) this.unfocusEvent()
 
@@ -776,8 +750,11 @@ export default {
         clickHoldACell.timeoutId = null
       }
 
-      // Call the onEventClick function if exists and not dragging handle and not deleting event.
-      if (mouseUpOnEvent && !hasResized && !isClickHoldingEvent && typeof this.onEventClick === 'function') {
+      // Call the onEventClick function if exists and not dragging handle or deleting event.
+      if (
+        mouseUpOnEvent && !hasResized && !isClickHoldingEvent && !dragCreatedEvent &&
+        typeof this.onEventClick === 'function'
+      ) {
         const event = this.view.events.find(e => e._eid === focusAnEvent._eid)
         return this.onEventClick(event, e)
       }
@@ -790,6 +767,121 @@ export default {
      */
     onKeyUp (e) {
       if (e.keyCode === 27) this.cancelDelete() // Escape key.
+    },
+
+    /**
+     * On mousemove while resising an event.
+     *
+     * @param {Object} e the native DOM event object.
+     */
+    eventResizing (e) {
+      const { resizeAnEvent } = this.domEvents
+      const event = this.view.events.find(e => e._eid === resizeAnEvent._eid) || { segments: {} }
+      const { minutes, cursorCoords } = this.minutesAtCursor(e)
+      const segment = event.segments && event.segments[resizeAnEvent.segment]
+
+      // Destructuring class method loses the `this` context.
+      // const { formatDateLite, countDays } = this.utils.date
+      const { date: ud, event: ue } = this.utils
+
+      // Prevent reducing event duration to less than 1 min so it does not disappear.
+      const newEndTimeMins = Math.max(minutes, this.timeFrom + 1, (segment || event).startTimeMinutes + 1)
+      event.endTimeMinutes = resizeAnEvent.endTimeMinutes = newEndTimeMins
+
+      // On resize, snap to time (e.g. 0, 15, 30, 45) if the option is on.
+      if (this.snapToTime) {
+        const plusHalfSnapTime = (event.endTimeMinutes + this.snapToTime / 2)
+        event.endTimeMinutes = plusHalfSnapTime - (plusHalfSnapTime % this.snapToTime)
+      }
+
+      if (segment) segment.endTimeMinutes = event.endTimeMinutes
+
+      // Remove 1 second if time is 24:00.
+      event.end.setHours(0, event.endTimeMinutes, event.endTimeMinutes === minutesInADay ? -1 : 0, 0)
+
+      // Resize events horizontally if resize-x is enabled (add/remove segments).
+      if (this.resizeX && this.isWeekView) {
+        event.daysCount = ud.countDays(event.start, event.end)
+        const cells = this.$refs.cells
+        const cellWidth = cells.offsetWidth / cells.childElementCount
+        const endCell = Math.floor(cursorCoords.x / cellWidth)
+
+        if (resizeAnEvent.startCell === null) resizeAnEvent.startCell = endCell - (event.daysCount - 1)
+        if (resizeAnEvent.endCell !== endCell) {
+          resizeAnEvent.endCell = endCell
+
+          const newEnd = ud.addDays(event.start, endCell - resizeAnEvent.startCell)
+          // Don't accept 0 and negative values.
+          const newDaysCount = Math.max(ud.countDays(event.start, newEnd), 1)
+
+          if (newDaysCount !== event.daysCount) {
+            // Check that all segments are up to date.
+            let lastSegmentFormattedDate = null
+            if (newDaysCount > event.daysCount) lastSegmentFormattedDate = ue.addEventSegment(event)
+            else lastSegmentFormattedDate = ue.removeEventSegment(event)
+            resizeAnEvent.segment = lastSegmentFormattedDate
+            event.endTimeMinutes += 0.001 // Force updating the current event.
+          }
+        }
+      }
+
+      // Emit event while resizing, so it has to be fast.
+      this.$emit('event-resizing', { _eid: event._eid, end: event.end, endTimeMinutes: event.endTimeMinutes })
+    },
+
+    /**
+     * On mousemove while dragging to create an event.
+     *
+     * @param {Object} e the native DOM event object.
+     */
+    eventDragCreation (e) {
+      const { dragCreateAnEvent } = this.domEvents
+      const { start, startCursorY, split } = dragCreateAnEvent
+      const timeAtCursor = new Date(start)
+      const { minutes, cursorCoords: { y } } = this.minutesAtCursor(e)
+
+      // Don't show anything until the threshold is reached.
+      if (!dragCreateAnEvent.event && Math.abs(startCursorY - y) < this.dragToCreateThreshold) return
+
+      // Create an event once, on the first pixel move after threshold is reached.
+      if (!dragCreateAnEvent.event) {
+        // Start the event with a 1 min duration, this will change as we are dragging.
+        dragCreateAnEvent.event = this.utils.event.createAnEvent(start, 1, { split })
+
+        // The event creation can be cancelled if user has a onEventCreate function
+        // (called from createAnEvent()). If cancelled, cancel the dragCreation.
+        if (!dragCreateAnEvent.event) {
+          dragCreateAnEvent.start = null
+          dragCreateAnEvent.split = null
+          dragCreateAnEvent.event = null
+          return
+        }
+
+        dragCreateAnEvent.event.resizing = true // Trigger the CSS class.
+      }
+
+      // If the event already exists change its start and end.
+      else {
+        // Remove 1 second if time is 24:00.
+        timeAtCursor.setHours(0, minutes, minutes === minutesInADay ? -1 : 0, 0)
+
+        // If snapToTime, set the `timeAtCursor` to the closest intervaled number.
+        if (this.snapToTime) {
+          let timeMinutes = timeAtCursor.getHours() * 60 + timeAtCursor.getMinutes()
+          const plusHalfSnapTime = timeMinutes + this.snapToTime / 2
+          timeMinutes = plusHalfSnapTime - (plusHalfSnapTime % this.snapToTime)
+          timeAtCursor.setHours(0, timeMinutes, 0, 0)
+        }
+
+        // If dragging the bottom of the event.
+        const dragFromBottom = start < timeAtCursor
+        const { event } = dragCreateAnEvent
+
+        event.start = dragFromBottom ? start : timeAtCursor
+        event.end = dragFromBottom ? timeAtCursor : start
+        event.startTimeMinutes = event.start.getHours() * 60 + event.start.getMinutes()
+        event.endTimeMinutes = event.end.getHours() * 60 + event.end.getMinutes()
+      }
     },
 
     /**
@@ -1450,6 +1542,7 @@ export default {
       return 100 / this.visibleDaysCount
     },
     cssClasses () {
+      const { resizeAnEvent, dragAnEvent, dragCreateAnEvent } = this.domEvents
       return {
         [`vuecal--${this.view.id}-view`]: true,
         [`vuecal--${this.locale}`]: this.locale,
@@ -1464,8 +1557,9 @@ export default {
         'vuecal--overflow-x': (this.minCellWidth && this.isWeekView) || (this.hasSplits && this.minSplitWidth),
         'vuecal--small': this.small,
         'vuecal--xsmall': this.xsmall,
-        'vuecal--resizing-event': this.domEvents.resizeAnEvent.endTimeMinutes,
-        'vuecal--dragging-event': this.domEvents.dragAnEvent._eid,
+        'vuecal--resizing-event': resizeAnEvent._eid,
+        'vuecal--drag-creating-event': dragCreateAnEvent.event,
+        'vuecal--dragging-event': dragAnEvent._eid,
         'vuecal--events-on-month-view': this.eventsOnMonthView,
         'vuecal--short-events': this.isMonthView && this.eventsOnMonthView === 'short'
       }
