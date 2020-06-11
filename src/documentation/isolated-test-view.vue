@@ -261,7 +261,7 @@ div
 </template>
 
 <script>
-import VueCal from '@/components/vue-cal'
+import VueCal from '@/vue-cal'
 
 const now = new Date()
 export default {

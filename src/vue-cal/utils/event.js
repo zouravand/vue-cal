@@ -412,7 +412,7 @@ export default class EventUtils {
    * @return {Boolean} true if in range, even partially.
    */
   eventInRange (event, start, end) {
-    console.log('eventInRange', event.occurrences, formatDateLite(start), formatDateLite(end))
+    console.log('eventInRange', event.occurrences, ud.formatDateLite(start), ud.formatDateLite(end))
     // Check if all-day or timeless event (if date but no time there won't be a `:` in event.start).
     if (event.allDay || !this._vuecal.time) {
       // Get the date and discard the time if any, then check it's within the date range.
@@ -443,7 +443,7 @@ export default class EventUtils {
    * @return {Boolean} true if in range, even partially.
    */
   recurringEventInRange (event, start, end) {
-    console.log('recurringEventInRange', event, formatDateLite(start), formatDateLite(end))
+    console.log('recurringEventInRange', event, ud.formatDateLite(start), ud.formatDateLite(end))
     // Event starts after the given range.
     if (end.getTime() <= event.start.getTime()) return false
 
@@ -478,7 +478,7 @@ export default class EventUtils {
 
   // @todo: MUST DO THIS - WAAAAAAY MORE PERFORMANT.
   recurringEventInRangeLoop (event, start, end, buildOccurences = true) {
-    const endTimestamp = Math.min(end.getTime(), event.repeat.until ? stringToDate(event.repeat.until).getTime() : Infinity)
+    const endTimestamp = Math.min(end.getTime(), event.repeat.until ? ud.stringToDate(event.repeat.until).getTime() : Infinity)
     const eventMonthDate = event.start.getDate()
     const eventMonth = event.start.getMonth()
     let repeatXDays = !isNaN(event.repeat.every)
@@ -507,7 +507,7 @@ export default class EventUtils {
         // If multiple-day event, we will have to create segments (in `createEventSegments`)
         // based on the exact same rules, so once it's in the view then keep the result in an
         // array for fast comparison.
-        occurrences[formatDateLite(tmpDate)] = {
+        occurrences[ud.formatDateLite(tmpDate)] = {
           start: new Date(tmpDateTimestamp).setHours(0, event.startTimeMinutes, 0),
           end: new Date(tmpDateTimestamp).addDays(event.daysCount - 1).setHours(0, event.endTimeMinutes, 0)
         }
@@ -529,7 +529,7 @@ export default class EventUtils {
   recurringEventInRangeLite (event, start, end) {
     const { every, until } = event.repeat
     // If starts after the end of `repeat.until` date then return false.
-    if (until && start.getTime() >= stringToDate(until).getTime()) return false
+    if (until && start.getTime() >= ud.stringToDate(until).getTime()) return false
     if (event.occurrences && Object.keys(event.occurrences).length) return true
 
     // On `years` view, a cell is a full year, on `year` view a cell is a month.
@@ -539,7 +539,7 @@ export default class EventUtils {
     if (yearsView) {
       // Loop through years.
       let i = Math.max(event.start.getFullYear(), start.getFullYear())
-      const endYear = until ? Math.min(end.getFullYear(), stringToDate(until)) : end.getFullYear()
+      const endYear = until ? Math.min(end.getFullYear(), ud.stringToDate(until)) : end.getFullYear()
       for (i; i <= endYear; i++) {
         // @todo: do the exact count.
         if (every === 'day') event.occurrences[i] = start.isLeapYear() ? 366 : 365
