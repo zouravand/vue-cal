@@ -1,80 +1,10 @@
 <template lang="pug">
 .documentation
-  .text-center.todo(style="margin: 0 auto 7em;max-width: 900px")
-    h2.title.todo To do...
-    p.mb-4 Here is my ongoing to do list.
+  //- Main demo.
+  main-demo
 
-    div.mb-n5 Earlier
-    div(style="transform: scale(0.85);opacity: 0.8")
-      todo-list-item default active view
-      todo-list-item Enable / disable views
-      todo-list-item Hide / show weekends
-      todo-list-item Add timeline w/ timerange &amp; increment
-      todo-list-item Add timeline
-      todo-list-item time format 12/24 h
-      todo-list-item Support for i18n
-      todo-list-item Split days
-      todo-list-item Support events
-      todo-list-item Background events
-      todo-list-item Overlap events
-      todo-list-item Keep only default style in CSS
-      todo-list-item Allow custom arrows
-      todo-list-item Default active date
-      todo-list-item Double tap on touch devices
-      todo-list-item 1st NPM Release!
-      todo-list-item Built-in themes
-      todo-list-item Resize events
-      todo-list-item Delete events
-      todo-list-item Emit DOM events
-      todo-list-item Event indicator on month view
-      todo-list-item Custom time format
-      todo-list-item Highlight current time
-      todo-list-item Show events on month view
-      todo-list-item sync 2 vue-cal instances
-      todo-list-item Add CSS transitions
-      todo-list-item Multiple day events
-      todo-list-item Custom events rendering
-      todo-list-item Custom callback on event click
-      todo-list-item Option to start week on Sunday
-      todo-list-item All day events in top bar
-      todo-list-item Custom cell rendering
-      todo-list-item Events count on year(s) views
-      todo-list-item Create new event
-      todo-list-item min &amp; max dates
-      todo-list-item Today button
-      todo-list-item Externalize locales
-      todo-list-item Support more simultaneous events
-      todo-list-item Sticky day splits labels
-      todo-list-item Hide particular weekdays
-      todo-list-item Optional week number
-      todo-list-item Date prototypes
-      todo-list-item Business hours
-
-    .mb-2 Current backlog
-    todo-list-item Drag &amp; drop events
-    todo-list-item Resize events snap to time
-    todo-list-item Drag events snap to time
-    todo-list-item Drop external events into Vue Cal
-    todo-list-item(status="doing") Recurring events
-    todo-list-item(status="todo") Drag &amp; drop multiple day events
-    todo-list-item(status="todo") Drag &amp; drop events on touch devices
-    todo-list-item(status="todo")
-      a(href="https://github.com/antoniandre/vue-cal/issues/168" target="_blank" style="text-decoration: underline;color: inherit") Full Typescript support
-    todo-list-item(status="todo")
-      a(href="https://github.com/antoniandre/vue-cal/issues/127" target="_blank" style="text-decoration: underline;color: inherit") Full SSR support
-    todo-list-item(status="todo") Improve multiple day events Month view
-    todo-list-item(status="todo") Prevent event intersect. on drag/resize
-    todo-list-item(status="todo") Horizontal timeline
-    //- TODO:
-      General
-      - do all the @todo in the codebase
-      - check overlaps only on the cell that has changed on event create/drag/background change
-      Multiple-day events:
-      - Fix event segments when dragging too fast on x axis.
-      - multiple days on month view like google calendar
-      - if more than 24 hour duration, consider as all-day
-
-  h2.headline.mt-12.mb-8.title Github project &nbsp;&amp;&nbsp; important notes
+  //- Github project.
+  h2.headline.mt-12.pt-12.mb-8.title Github project &nbsp;&amp;&nbsp; important notes
   v-layout.mb-3(align-center)
     v-icon.pl-2.pr-1.mr-4.grey--text.text--lighten-1(x-large) fab fa-github
     a(href="https://github.com/antoniandre/vue-cal" target="_blank") github.com/antoniandre/vue-cal #[v-icon(small color="primary") open_in_new]
@@ -100,6 +30,84 @@
       a.pink--text.ml-2(href="https://www.paypal.me/antoniandre1" target="_blank" style="text-decoration: underline") #[strong Support the project]!
       div Thank you so much to all the supporters! #[span.headline.ml-1 🙏]
 
+  //- To Do list.
+  h2.headline.mt-12.pt-12
+    a(href="#to-do-list") To do...
+    a#to-do-list(name="to-do-list")
+  p.mb-4 Here is my ongoing to do list.
+
+  .layout.wrap.align-center
+    strong.mr-3 Earlier
+    todo-list-item default active view
+    todo-list-item Enable / disable views
+    todo-list-item Hide / show weekends
+    todo-list-item Add timeline w/ timerange &amp; increment
+    todo-list-item Add timeline
+    todo-list-item time format 12/24 h
+    todo-list-item Support for i18n
+    todo-list-item Split days
+    todo-list-item Support events
+    todo-list-item Background events
+    todo-list-item Overlap events
+    todo-list-item Keep only default style in CSS
+    todo-list-item Allow custom arrows
+    todo-list-item Default active date
+    todo-list-item Double tap on touch devices
+    todo-list-item 1st NPM Release!
+    todo-list-item Built-in themes
+    todo-list-item Resize events
+    todo-list-item Delete events
+    todo-list-item Emit DOM events
+    todo-list-item Event indicator on month view
+    todo-list-item Custom time format
+    todo-list-item Highlight current time
+    todo-list-item Show events on month view
+    todo-list-item sync 2 vue-cal instances
+    todo-list-item Add CSS transitions
+    todo-list-item Multiple day events
+    todo-list-item Custom events rendering
+    todo-list-item Custom callback on event click
+    todo-list-item Option to start week on Sunday
+    todo-list-item All day events in top bar
+    todo-list-item Custom cell rendering
+    todo-list-item Events count on year(s) views
+    todo-list-item Create new event
+    todo-list-item min &amp; max dates
+    todo-list-item Today button
+    todo-list-item Externalize locales
+    todo-list-item Support more simultaneous events
+    todo-list-item Sticky day splits labels
+    todo-list-item Hide particular weekdays
+    todo-list-item Optional week number
+    todo-list-item Date prototypes
+    todo-list-item Business hours
+    todo-list-item Drag &amp; drop events
+    todo-list-item Resize events snap to time
+    todo-list-item Drag events snap to time
+    todo-list-item Drop external events into Vue Cal
+
+  .layout.wrap.align-center.mt-4
+    strong.mr-3 Current backlog
+    todo-list-item(status="doing") Recurring events
+    todo-list-item(status="todo") Drag &amp; drop multiple day events
+    todo-list-item(status="todo") Drag &amp; drop events on touch devices
+    todo-list-item(status="todo")
+      a(href="https://github.com/antoniandre/vue-cal/issues/168" target="_blank" style="text-decoration: underline;color: inherit") Full Typescript support
+    todo-list-item(status="todo")
+      a(href="https://github.com/antoniandre/vue-cal/issues/127" target="_blank" style="text-decoration: underline;color: inherit") Full SSR support
+    todo-list-item(status="todo") Improve multiple day events Month view
+    todo-list-item(status="todo") Prevent event intersect. on drag/resize
+    todo-list-item(status="todo") Horizontal timeline
+    //- TODO:
+      General
+      - do all the @todo in the codebase
+      - check overlaps only on the cell that has changed on event create/drag/background change
+      Multiple-day events:
+      - Fix event segments when dragging too fast on x axis.
+      - multiple days on month view like google calendar
+      - if more than 24 hour duration, consider as all-day
+
+  //- Installation
   h2.headline.mt-12.pt-12
     a(href="#installation") Installation
     a#installation(name="installation")
@@ -341,10 +349,52 @@ import Sshpre from 'simple-syntax-highlighter'
 import 'simple-syntax-highlighter/dist/sshpre.css'
 import HighlightMessage from './components/highlight-message'
 import TodoListItem from './components/todo-list-item'
+import MainDemo from './main-demo'
 import Examples from './examples'
 import Api from './api'
 import ReleaseNotes from './release-notes'
 import './scss/index.scss'
+
+const localesList = [
+  { code: 'ar', label: 'Arabic' },
+  { code: 'bn', label: 'Bangla' },
+  { code: 'bs', label: 'Bosnian' },
+  { code: 'bg', label: 'Bulgarian' },
+  { code: 'ca', label: 'Catalan' },
+  { code: 'cs', label: 'Czech' },
+  { code: 'zh-cn', label: 'Chinese (Simplified)' },
+  { code: 'zh-hk', label: 'Chinese (Traditional)' },
+  { code: 'hr', label: 'Croatian' },
+  { code: 'da', label: 'Danish' },
+  { code: 'nl', label: 'Dutch' },
+  { code: 'en', label: 'English' },
+  { code: 'fa', label: 'Farsi' },
+  { code: 'fr', label: 'French' },
+  { code: 'ka', label: 'Georgian' },
+  { code: 'de', label: 'German' },
+  { code: 'el', label: 'Greek' },
+  { code: 'he', label: 'Hebrew' },
+  { code: 'hu', label: 'Hungarian' },
+  { code: 'is', label: 'Icelandic' },
+  { code: 'it', label: 'Italian' },
+  { code: 'id', label: 'Indonesian' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'lt', label: 'Lithuanian' },
+  { code: 'no', label: 'Norwegian' },
+  { code: 'pl', label: 'Polish' },
+  { code: 'pt-br', label: 'Portuguese Brasilian' },
+  { code: 'ro', label: 'Romanian' },
+  { code: 'ru', label: 'Russian' },
+  { code: 'sr', label: 'Serbian' },
+  { code: 'sk', label: 'Slovak' },
+  { code: 'sl', label: 'Slovenian' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'sv', label: 'Swedish' },
+  { code: 'tr', label: 'Turkish' },
+  { code: 'uk', label: 'Ukrainian' },
+  { code: 'vi', label: 'Vietnamese' }
+]
 
 export default {
   components: {
@@ -352,52 +402,14 @@ export default {
     Sshpre,
     HighlightMessage,
     TodoListItem,
+    MainDemo,
     Examples,
     Api,
     ReleaseNotes
   },
 
   data: () => ({
-    localesList: [
-      { code: 'ar', label: 'Arabic' },
-      { code: 'bn', label: 'Bangla' },
-      { code: 'bs', label: 'Bosnian' },
-      { code: 'bg', label: 'Bulgarian' },
-      { code: 'ca', label: 'Catalan' },
-      { code: 'cs', label: 'Czech' },
-      { code: 'zh-cn', label: 'Chinese (Simplified)' },
-      { code: 'zh-hk', label: 'Chinese (Traditional)' },
-      { code: 'hr', label: 'Croatian' },
-      { code: 'da', label: 'Danish' },
-      { code: 'nl', label: 'Dutch' },
-      { code: 'en', label: 'English' },
-      { code: 'fa', label: 'Farsi' },
-      { code: 'fr', label: 'French' },
-      { code: 'ka', label: 'Georgian' },
-      { code: 'de', label: 'German' },
-      { code: 'el', label: 'Greek' },
-      { code: 'he', label: 'Hebrew' },
-      { code: 'hu', label: 'Hungarian' },
-      { code: 'is', label: 'Icelandic' },
-      { code: 'it', label: 'Italian' },
-      { code: 'id', label: 'Indonesian' },
-      { code: 'ja', label: 'Japanese' },
-      { code: 'ko', label: 'Korean' },
-      { code: 'lt', label: 'Lithuanian' },
-      { code: 'no', label: 'Norwegian' },
-      { code: 'pl', label: 'Polish' },
-      { code: 'pt-br', label: 'Portuguese Brasilian' },
-      { code: 'ro', label: 'Romanian' },
-      { code: 'ru', label: 'Russian' },
-      { code: 'sr', label: 'Serbian' },
-      { code: 'sk', label: 'Slovak' },
-      { code: 'sl', label: 'Slovenian' },
-      { code: 'es', label: 'Spanish' },
-      { code: 'sv', label: 'Swedish' },
-      { code: 'tr', label: 'Turkish' },
-      { code: 'uk', label: 'Ukrainian' },
-      { code: 'vi', label: 'Vietnamese' }
-    ]
+    localesList
   }),
 
   computed: {

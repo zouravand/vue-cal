@@ -406,8 +406,9 @@ export default {
   }),
 
   methods: {
-    log (params) {
-      console.log(params)
+    log (...params) {
+      // eslint-disable-next-line
+      console.log(...params)
     }
   }
 }
