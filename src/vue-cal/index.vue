@@ -37,7 +37,7 @@
           template(v-slot:event="{ event, view }")
             slot(name="event" :view="view" :event="event")
               .vuecal__event-title.vuecal__event-title--edit(
-                v-if="editEvents.title && event.title && event.titleEditable"
+                v-if="editEvents.title && event.titleEditable"
                 contenteditable
                 @blur="onEventTitleBlur($event, event)"
                 v-html="event.title")
@@ -85,7 +85,7 @@
                 template(v-slot:event="{ event, view }")
                   slot(name="event" :view="view" :event="event")
                     .vuecal__event-title.vuecal__event-title--edit(
-                      v-if="editEvents.title && event.title && event.titleEditable"
+                      v-if="editEvents.title && event.titleEditable"
                       contenteditable
                       @blur="onEventTitleBlur($event, event)"
                       v-html="event.title")
@@ -120,7 +120,7 @@
                   template(v-slot:event="{ event, view }")
                     slot(name="event" :view="view" :event="event")
                       .vuecal__event-title.vuecal__event-title--edit(
-                        v-if="editEvents.title && event.title && event.titleEditable"
+                        v-if="editEvents.title && event.titleEditable"
                         contenteditable
                         @blur="onEventTitleBlur($event, event)"
                         v-html="event.title")
@@ -315,7 +315,10 @@ export default {
           event: null
         },
         focusAnEvent: {
-          _eid: null // Only one at a time.
+          _eid: null, // Only one at a time.
+          // Useful to detect a full click (mousedown + mouseup on same event).
+          // E.g. Only call onEventClick function (if any) on full click.
+          mousedUp: false
         },
         clickHoldAnEvent: {
           _eid: null, // Only one at a time.
@@ -678,6 +681,8 @@ export default {
       let hasResized = false
       const { event: dragCreatedEvent, start: dragCreateStarted } = dragCreateAnEvent
       const mouseUpOnEvent = this.isDOMElementAnEvent(e.target)
+      const eventClicked = focusAnEvent.mousedUp // If has mousedown & mouseup on the same event.
+      focusAnEvent.mousedUp = false // Reinit the variable for next mouseup.
 
       if (mouseUpOnEvent) this.domEvents.cancelClickEventCreation = true
 
@@ -750,11 +755,10 @@ export default {
         clickHoldACell.timeoutId = null
       }
 
-      // Call the onEventClick function if exists and not dragging handle or deleting event.
-      if (
-        mouseUpOnEvent && !hasResized && !isClickHoldingEvent && !dragCreatedEvent &&
-        typeof this.onEventClick === 'function'
-      ) {
+      // On event click (mousedown + mouseup on the same event), call the onEventClick function if exists
+      // and if not dragging handle or deleting event.
+      const eventClickHandler = typeof this.onEventClick === 'function'
+      if (eventClicked && !hasResized && !isClickHoldingEvent && !dragCreatedEvent && eventClickHandler) {
         const event = this.view.events.find(e => e._eid === focusAnEvent._eid)
         return this.onEventClick(event, e)
       }
@@ -961,7 +965,8 @@ export default {
 
         // Correct the common practice to end at 00:00 or 24:00 to count a full day.
         if (!endTimeMinutes || endTimeMinutes === minutesInADay) {
-          end.setSeconds(-1) // End at 23:59:59.
+          // This also applies on timeless events, all-day events & multiple-day events.
+          end.setHours(23, 59, 59, 0)
           endDateF = ud.formatDateLite(end)
           endTimeMinutes = minutesInADay
         }
@@ -1177,12 +1182,18 @@ export default {
   mounted () {
     const ud = this.utils.date
     const hasTouch = 'ontouchstart' in window
+    const { resize, drag, create, delete: deletable, title } = this.editEvents
+    const hasEventClickHandler = this.onEventClick && typeof this.onEventClick === 'function'
 
-    if (this.editEvents.resize || this.editEvents.drag) {
-      window.addEventListener(hasTouch ? 'touchmove' : 'mousemove', this.onMouseMove, { passive: false })
+    // If event is editable in any way add a mouseup event handler.
+    if (resize || drag || create || deletable || title || hasEventClickHandler) {
       window.addEventListener(hasTouch ? 'touchend' : 'mouseup', this.onMouseUp)
     }
-    if (this.editEvents.title) window.addEventListener('keyup', this.onKeyUp)
+    if (resize || drag || (create && this.dragToCreateEvent)) {
+      window.addEventListener(hasTouch ? 'touchmove' : 'mousemove', this.onMouseMove, { passive: false })
+    }
+
+    if (title) window.addEventListener('keyup', this.onKeyUp)
 
     // Disable context menu on touch devices on the whole vue-cal instance.
     if (hasTouch) {
@@ -1193,7 +1204,7 @@ export default {
     }
 
     // https://github.com/antoniandre/vue-cal/issues/221
-    this.alignWithScrollbar()
+    if (!this.hideBody) this.alignWithScrollbar()
 
     // Emit the `ready` event with useful parameters.
     const startDate = this.view.startDate
@@ -1561,7 +1572,8 @@ export default {
         'vuecal--drag-creating-event': dragCreateAnEvent.event,
         'vuecal--dragging-event': dragAnEvent._eid,
         'vuecal--events-on-month-view': this.eventsOnMonthView,
-        'vuecal--short-events': this.isMonthView && this.eventsOnMonthView === 'short'
+        'vuecal--short-events': this.isMonthView && this.eventsOnMonthView === 'short',
+        'vuecal--has-touch': typeof window !== 'undefined' && 'ontouchstart' in window
       }
     },
     isYearsOrYearView () {

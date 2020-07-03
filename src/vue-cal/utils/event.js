@@ -416,11 +416,12 @@ export default class EventUtils {
     // Check if all-day or timeless event (if date but no time there won't be a `:` in event.start).
     if (event.allDay || !this._vuecal.time) {
       // Get the date and discard the time if any, then check it's within the date range.
-      const eventStartMidnight = new Date(event.start).setHours(0, 0, 0, 0)
-      const startMidnight = new Date(start).setHours(0, 0, 0, 0)
-      const endMidnight = new Date(end).setHours(23, 59, 59, 999)
-      const inRange = eventStartMidnight >= startMidnight && eventStartMidnight <= endMidnight
-      return inRange || (event.repeat && this.recurringEventInRange(event, new Date(startMidnight), new Date(endMidnight)))
+      const eventStartTimestamp = new Date(event.start).setHours(0, 0, 0, 0)
+      const eventEndTimestamp = new Date(event.end).setHours(23, 59, 59, 0)
+      const startTimestamp = new Date(start).setHours(0, 0, 0, 0)
+      const endTimestamp = new Date(end).setHours(23, 59, 59, 0)
+      const inRange = eventEndTimestamp >= startTimestamp && eventStartTimestamp <= endTimestamp
+      return inRange || (event.repeat && this.recurringEventInRange(event, new Date(startTimestamp), new Date(endTimestamp)))
     }
 
     if (event.repeat) return this.recurringEventInRange(event, start, end)

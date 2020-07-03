@@ -1,6 +1,28 @@
 <template lang="pug">
 div
   div.grey--text.mb-1
+    strong.mr-1 Version 3.6.2
+    | Fix all-day events not showing up and fix error when using #[span.code hide-body].
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.6.1
+    | Fix timeless events not showing up.
+  div.mb-1
+    strong.mr-1 Version 3.6.0
+    | Added Albanian language and short days in Russian language
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.5.6
+    | Fix multiple day events display across days when #[span.code time] is false
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.5.4
+    | Add mouseup event listener when deletable but not resizable
+  div.grey--text.mb-1
+    strong Version 3.5.3
+    ul
+      li Provide the split (if any) to event creation from cell click &amp; hold.
+      li.
+        Add mousemove &amp; mouseup event handlers if drag-creation is allowed but
+        #[span.code editableEvents.resize] is set to false.
+  div.grey--text.mb-1
     strong Version 3.5.1
     ul
       li Don't fire cell-click when cklicking on an event

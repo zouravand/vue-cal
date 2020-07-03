@@ -83,9 +83,10 @@ export default {
   }),
 
   methods: {
-    getSplitAtCursor (DOMEvent) {
-      let split = (DOMEvent.target.classList.contains('vuecal__cell-split') && DOMEvent.target) ||
-      this.vuecal.findAncestor(DOMEvent.target, 'vuecal__cell-split')
+    getSplitAtCursor ({ target }) {
+      const targetIsSplit = target.classList.contains('vuecal__cell-split')
+      let split = targetIsSplit ? target : this.vuecal.findAncestor(target, 'vuecal__cell-split')
+
       if (split) {
         split = split.attributes['data-split'].value
         // Convert to a numeric value if split id is a number.
@@ -212,15 +213,18 @@ export default {
 
       // If the cellClickHold option is true and not mousedown on an event, click & hold to create an event.
       else if (this.options.cellClickHold && ['month', 'week', 'day'].includes(this.view.id)) {
-        this.setUpCellHoldTimer()
+        this.setUpCellHoldTimer(DOMEvent)
       }
     },
 
     // When click & holding a cell, and if allowed, set a timeout to create an event (can be cancelled).
-    setUpCellHoldTimer (split) {
+    setUpCellHoldTimer (DOMEvent) {
       const { clickHoldACell } = this.domEvents
       clickHoldACell.cellId = `${this.vuecal._uid}_${this.data.formattedDate}`
-      clickHoldACell.split = split
+      // If splitting days, store the clicked split to create an event in it from the global
+      // mousemove handler in index.vue.
+      clickHoldACell.split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
+
       clickHoldACell.timeoutId = setTimeout(() => {
         if (clickHoldACell.cellId && !this.domEvents.cancelClickEventCreation) {
           const { _eid } = this.utils.event.createAnEvent(

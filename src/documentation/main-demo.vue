@@ -5,6 +5,7 @@ div
     span.ml-8.primary--text.text--darken-1 or unleash the full potential!
   .layout.wrap.align-center.justify-center
     .mx-2
+      //- Date picker.
       vue-cal.vuecal--date-picker.demo(
         xsmall
         :selected-date="selectedDate"
@@ -17,7 +18,9 @@ div
         @cell-click="selectedDate = $event"
         style="width: 210px;height: 230px")
       .grey--text.code.my-2(style="font-size: 13px") Selected date: '{{ selectedDate.format() }}'
+
     .flex.mx-2(style="max-width: 800px")
+      //- Full-power calendar.
       vue-cal.demo.full-cal.vuecal--full-height-delete(
         hide-weekends
         :selected-date="selectedDate"
@@ -27,7 +30,7 @@ div
         sticky-split-labels
         :editable-events="demoExample.editable"
         :events="demoExample.events"
-        @cell-focus="selectedDate = $event.date"
+        @cell-focus="selectedDate = $event.date || $event"
         style="height: 450px")
         template(v-slot:split-label="{ split, view }")
           v-icon(:color="split.color" size="20") person
@@ -56,18 +59,14 @@ export default {
   }),
 
   computed: {
+    // Get the Monday of the real time current week.
     previousFirstDayOfWeek () {
       return new Date(new Date().setDate(new Date().getDate() - (new Date().getDay() + 6) % 7))
     }
   },
 
-  methods: {
-    cl: (a) => console.log(a)
-  },
-
   created () {
-    this.selectedDate = this.previousFirstDayOfWeek
-
+    // Place all the events in the real time current week.
     for (let i = 0; i < 5; i++) {
       const day = this.previousFirstDayOfWeek.addDays(i).format()
 
@@ -95,6 +94,7 @@ export default {
       )
     }
 
+    // Date.format() and Date.addDays() are helper methods added by Vue Cal.
     const monday = this.previousFirstDayOfWeek.format()
     const tuesday = this.previousFirstDayOfWeek.addDays(1).format()
     const thursday = this.previousFirstDayOfWeek.addDays(3).format()
@@ -167,7 +167,7 @@ $kate: #ff7fc8;
   // Both calendars.
   .vuecal__cell--out-of-scope {color: rgba(0, 0, 0, 0.15);}
 
-  // Full Calendar.
+  // Full power calendar.
   // ------------------------------------------------------
   &.full-cal .vuecal__menu {background-color: transparent;}
   &.full-cal .vuecal__title-bar {background: rgba(0, 0, 0, 0.03);}
@@ -188,7 +188,7 @@ $kate: #ff7fc8;
       color: #fff;
     }
   }
-  .weekday-label {opacity: 0.4;font-weight: 500;}
+  &.full-cal .weekday-label {opacity: 0.4;font-weight: 500;}
   .vuecal__header .v-icon {color: inherit;}
   &:not(.vuecal--day-view) .vuecal__cell--selected {background-color: transparent;}
   &:not(.vuecal--day-view).full-cal .vuecal__cell--selected:before {border: 1px solid rgba($john, 0.8);}
@@ -199,6 +199,7 @@ $kate: #ff7fc8;
     font-weight: 500;
     line-height: 1.2;
   }
+
   // John.
   .vuecal__header .john {color: darken($john, 5);}
   .vuecal__body .john {background-color: rgba($john, 0.08);}
