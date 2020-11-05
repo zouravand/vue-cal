@@ -270,7 +270,7 @@ export default {
       // If splitting days, also return the clicked split on cell contextmenu when emitting event.
       const split = this.splitsCount ? this.getSplitAtCursor(DOMEvent) : null
 
-      this.vuecal.$emit('cell-contextmenu', { date, ...cursorCoords, ...(split || {}) })
+      this.vuecal.$emit('cell-contextmenu', { date, ...cursorCoords, ...(split || {}), e: DOMEvent })
     }
   },
 
@@ -290,6 +290,8 @@ export default {
     },
     // Is the current cell disabled or not.
     isDisabled () {
+      const { disableDays } = this.options
+      if (disableDays.length && disableDays.includes(this.data.formattedDate)) return true
       return this.isBeforeMinDate || this.isAfterMaxDate
     },
     // Is the current cell selected or not.

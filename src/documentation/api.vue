@@ -14,9 +14,11 @@ div
     activeView:             [String],          default: 'week'
     allDayBarHeight:        [String, Number],  default: '25px'
     cellClickHold:          [Boolean],         default: true
+    cellContextmenu:        [Boolean],         default: false
     clickToNavigate:        [Boolean],         default: false
     dblclickToNavigate:     [Boolean],         default: true
     disableDatePrototypes:  [Boolean],         default: false
+    disableDays:            [Array],           default: []
     disableViews:           [Array],           default: []
     dragToCreateEvent:      [Boolean],         default: true
     dragToCreateThreshold:  [Number],          default: 15
@@ -141,6 +143,10 @@ div
         If you want to hide Saturday and Sunday you can put #[span.code 6, 7] in the array or use
         #[span.code hideWeekends] in supplement of #[span.code hideWeekdays].
     li
+      code.mr-2 disableDays
+      span.code [Array], default: []
+      p Allows you to provide an array of formatted dates (e.g. #[span.code 2020-09-18]) to disable.
+    li
       code.mr-2 disableViews
       span.code [Array], default: []
       p.
@@ -219,7 +225,7 @@ div
         #[span.code week-number-cell] slot.
       highlight-message
         a#there-can-be-53-weeks-in-a-year(name="there-can-be-53-weeks-in-a-year")
-        Strong Did you know there can be 53 weeks in the year?#[br]
+        strong Did you know there can be 53 weeks in the year?#[br]
         | This happens every time the year starts a Thursday, or starts a Wednesday of a leap year.
         | In this case the week number will be 53 instead of 1.
     li
@@ -320,6 +326,12 @@ div
       p.
         Allows you to disable the default event creation on cell click &amp; hold which only
         happens if #[span.code editableEvents.create] is set to #[span.code true].
+    li
+      code.mr-2 cellContextmenu
+      span.code [Boolean], default: false
+      p.
+        When set to #[span.code true], a right click on a cell will emit the #[span.code cell-contextmenu] event,
+        providing an object containing: the date and time at cursor, the x and y position of cursor, and the full original DOM event.
     li
       code.mr-2 time
       span.code [Boolean], default: true

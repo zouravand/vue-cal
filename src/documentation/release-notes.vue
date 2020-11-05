@@ -1,5 +1,32 @@
 <template lang="pug">
 div
+  div.mb-1
+    .title.mb-5 Version 4.0.0: supports and only works on Vue 3.
+
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.8.4
+    | Fix showing events ending at 24:00 on Safari.
+
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.8.3
+    | Return the full original DOM event from #[span.code cell-contextmenu].
+
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.8.2
+    | Add #[span.code active-view] validations and raise warning if incorrect.
+
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.8.1
+    | Fix all-day events when no time information is provided.
+  div.mb-1
+    strong.mr-1 Version 3.8.0
+    | Add Mongolian language.
+  div.mb-1
+    strong.mr-1 Version 3.7.0
+    | Add a new #[span.code disable-days] option.
+  div.grey--text.mb-1
+    strong.mr-1 Version 3.6.5
+    | Call the on-event-click function (if any) on event single tap. Also add a 30px threshold to not call the handler if the event was tapped and dragged.
   div.grey--text.mb-1
     strong.mr-1 Version 3.6.4
     ul
@@ -35,7 +62,7 @@ div
   div.grey--text.mb-1
     strong Version 3.5.1
     ul
-      li Don't fire cell-click when cklicking on an event
+      li Don't fire cell-click when clicking on an event
       li Focus and highlight cell on mousedown rather than click
   div.
     #[strong Version 3.5.0] Create events with click &amp; drag.
@@ -190,11 +217,11 @@ div
             Refer to the #[a(href="#css-notes") CSS Notes].
 
   //- Older release notes.
-  v-layout.my-12(align-center)
+  .layout.my-12.align-center
     v-btn.ml-n5.primary--text(rounded text @click="seeOldReleaseNotes = !seeOldReleaseNotes")
       v-icon.mr-2 {{ seeOldReleaseNotes ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
       strong {{ seeOldReleaseNotes ? 'Hide' : 'See' }} older release notes
-    v-divider.primary
+    .v-divider.primary
 
   v-slide-y-transition
     div(v-if="seeOldReleaseNotes")
