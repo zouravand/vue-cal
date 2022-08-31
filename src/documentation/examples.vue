@@ -3252,8 +3252,8 @@ export default {
     activeView: 'week',
     logMouseEvents: false,
     snapToTime15: false,
-    dragToCreateThreshold: '15',
-    dragToCreateThresholdOpts: [{ label: '0' }, { label: '15' }],
+    dragToCreateThreshold: 15,
+    dragToCreateThresholdOpts: [{ value: 0, label: '0' }, { value: 15, label: '15' }],
     customDaySplitLabels: [
       { label: 'John', color: 'blue', class: 'split1' },
       { label: 'Tom', color: 'green', class: 'split2' },

@@ -869,7 +869,7 @@ export default {
       // Resize events horizontally if resize-x is enabled (add/remove segments).
       if (this.resizeX && this.isWeekView) {
         event.daysCount = ud.countDays(event.start, event.end)
-        const cells = this.cellsEl
+        const cells = this.$refs.cells
         const cellWidth = cells.offsetWidth / cells.childElementCount
         const endCell = Math.floor(cursorCoords.x / cellWidth)
 
