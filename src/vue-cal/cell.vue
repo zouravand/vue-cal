@@ -24,11 +24,17 @@ transition-group.vuecal__cell(
     @dragover="!isDisabled && editEvents.drag && dnd && dnd.cellDragOver($event, $data, data.startDate, splitsCount ? split.id : null)"
     @dragleave="!isDisabled && editEvents.drag && dnd && dnd.cellDragLeave($event, $data, data.startDate)"
     @drop="!isDisabled && editEvents.drag && dnd && dnd.cellDragDrop($event, $data, data.startDate, splitsCount ? split.id : null)")
+
+    .cell-time-labels(v-if="options.showTimeInCells && options.time && isWeekOrDayView && !allDay")
+      span.cell-time-label(v-for="(cell, i) in vuecal.timeCells" :key="i").
+        {{ cell.label }}
+
     template(v-if="isWeekOrDayView && !allDay && specialHours.length")
       .vuecal__special-hours(
         v-for="(block, i) in specialHours"
         :class="`vuecal__special-hours--day${block.day} ${block.class}`"
         :style="`height: ${block.height}px;top: ${block.top}px`")
+        .special-hours-label(v-if="block.label" v-html="block.label")
     slot(
       name="cell-content"
       :events="events"
@@ -45,7 +51,7 @@ transition-group.vuecal__cell(
         :overlaps="((splitsCount ? split.overlaps[event._eid] : cellOverlaps[event._eid]) || []).overlaps"
         :event-position="((splitsCount ? split.overlaps[event._eid] : cellOverlaps[event._eid]) || []).position"
         :overlaps-streak="splitsCount ? split.overlapsStreak : cellOverlapsStreak")
-        template(v-slot:event="{ event, view }")
+        template(#event="{ event, view }")
           slot(name="event" :view="view" :event="event")
   .vuecal__now-line(
     v-if="timelineVisible"
@@ -55,7 +61,7 @@ transition-group.vuecal__cell(
 </template>
 
 <script>
-import Event from './event'
+import Event from './event.vue'
 
 export default {
   inject: ['vuecal', 'utils', 'modules', 'view', 'domEvents'],
@@ -314,6 +320,7 @@ export default {
       },
       set (date) {
         this.view.selectedDate = date
+        this.vuecal.$emit('update:selected-date', this.view.selectedDate)
       }
     },
     // Cache result for performance.
@@ -520,6 +527,23 @@ export default {
     .vuecal--year-view &,
     .vuecal--month-view & {justify-content: center;}
   }
+
+  .cell-time-labels {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .cell-time-label {
+    flex-grow: 1;
+    font-size: 0.8em;
+    opacity: 0.3;
+    line-height: 1.7;
+  }
+  // .cell-time-label:hover {opacity: 0.7;}
 
   &-split {
     display: flex;
