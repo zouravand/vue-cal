@@ -33,24 +33,21 @@
     "LICENSE"
   ],
   "devDependencies": {
-    "@babel/core": "^7.18.9",
-    "@babel/eslint-parser": "^7.18.9",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@mdi/font": "^6.9.96",
-    "@vitejs/plugin-vue": "^3.0.3",
-    "@vue/compiler-sfc": "^3.2.37",
-    "autoprefixer": "^10.4.7",
-    "eslint": "^8.20.0",
-    "rollup": "^2.77.2",
+    "@vitejs/plugin-vue2": "^1.1.2",
+    "autoprefixer": "^10.4.8",
+    "eslint": "^8.23.0",
+    "eslint-plugin-vue": "^7.20.0",
+    "pug": "^3.0.2",
+    "rollup": "^2.79.0",
     "rollup-plugin-terser": "^7.0.2",
-    "sass": "^1.54.0",
-    "simple-syntax-highlighter": "^1.5.0",
+    "sass": "^1.54.7",
+    "simple-syntax-highlighter": "^1.5.1",
     "vite": "^3.0.9",
-    "vite-plugin-pug": "^0.3.1",
-    "vue": "^2.6.14",
-    "vue-router": "^3.5.3",
-    "wave-ui": "^2.40.5"
+    "vue": "^2.7.10",
+    "vue-router": "^3.6.4",
+    "wave-ui": "^1.56.2"
   },
   "peerDependencies": {
     "vue": "^2.6.14 || ^3.2.0"

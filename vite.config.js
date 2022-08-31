@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import { createVuePlugin } from 'vite-plugin-vue2'
+import vue from '@vitejs/plugin-vue2'
 import { terser } from "rollup-plugin-terser" // Minifier.
 import { resolve } from 'path'
 import pkg from './package.json'
@@ -93,8 +93,8 @@ export default defineConfig({
     }
   },
   plugins: [
-    createVuePlugin({
-      vueTemplateOptions: {
+    vue({
+      template: {
         compilerOptions: {
           whitespace: 'preserve'
         }
