@@ -56,7 +56,7 @@
     "eslint": "^8.26.0",
     "postcss": "^8.4.18",
     "pug": "^3.0.2",
-    "rollup": "^3.2.3",
+    "rollup": "^2.0.0",
     "rollup-plugin-terser": "^7.0.2",
     "sass": "^1.55.0",
     "simple-syntax-highlighter": "^2.2.3",
