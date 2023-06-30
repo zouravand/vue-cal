@@ -526,11 +526,11 @@ export default {
         case 'week': {
           date = ud.getPreviousFirstDayOfWeek(date, this.startWeekOnSunday, this.startWeekOnSaturday)
           const weekDaysCount = this.hideWeekends ? 5 : 7
-          if (this.startWeekOnSunday)
-            ud.addDays(date, 1)
-          if (this.startWeekOnSaturday)
-            ud.addDays(date, 2)
-          this.view.startDate = this.hideWeekends && date
+          if (this.hideWeekends && this.startWeekOnSunday)
+            date = ud.addDays(date, 1)
+          if (this.hideWeekends && this.startWeekOnSaturday)
+            date = ud.addDays(date, 2)
+          this.view.startDate =  date
           this.view.startDate.setHours(0, 0, 0, 0)
           this.view.endDate = ud.addDays(date, weekDaysCount)
           this.view.endDate.setSeconds(-1) // End at 23:59:59.
@@ -557,9 +557,9 @@ export default {
       if (this.ready) {
         let startDate = this.view.startDate
         if (this.startWeekOnSunday)
-          ud.addDays(startDate, 1)
+          startDate = ud.addDays(startDate, 1)
         if (this.startWeekOnSaturday)
-          ud.addDays(startDate, 2)
+          startDate = ud.addDays(startDate, 2)
         const params = {
           view,
           startDate,
@@ -1307,11 +1307,11 @@ export default {
     if (!this.hideBody) this.alignWithScrollbar()
 
     // Emit the `ready` event with useful parameters.
-    const startDate = this.view.startDate
+    let startDate = this.view.startDate
     if (this.startWeekOnSunday)
-      ud.addDays(startDate, 1)
+      startDate = ud.addDays(startDate, 1)
     if (this.startWeekOnSaturday)
-      ud.addDays(startDate, 2)
+      startDate = ud.addDays(startDate, 2)
     const params = {
       view: this.view.id,
       startDate,
@@ -1382,9 +1382,9 @@ export default {
       const ud = this.utils.date
       let date = this.view.firstCellDate
       if (this.startWeekOnSunday)
-        ud.addDays(date, 1)
+        date = ud.addDays(date, 1)
       if (this.startWeekOnSaturday)
-        ud.addDays(date, 2)
+        date = ud.addDays(date, 2)
       return ud.getWeek(date)
     },
     // For week & day views.
@@ -1500,7 +1500,7 @@ export default {
     viewTitle () {
       const ud = this.utils.date
       let title = ''
-      const date = this.view.startDate
+      let date = this.view.startDate
       const year = date.getFullYear()
       const month = date.getMonth()
 
@@ -1536,9 +1536,9 @@ export default {
             }
           }
           if (this.startWeekOnSunday)
-            ud.addDays(date, 1)
+            date = ud.addDays(date, 1)
           if (this.startWeekOnSaturday)
-            ud.addDays(date, 2)
+            date = ud.addDays(date, 2)
           title = `${this.texts.week} ${ud.getWeek(date)} (${formattedMonthYear})`
           break
         }
