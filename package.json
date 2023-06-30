@@ -1,6 +1,6 @@
 {
   "name": "vue-cal-plus",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "A Vue JS full calendar, no dependency, no BS. :metal:",
   "author": "Pouya Zouravand <pouya.zuravand@gmail.com>",
   "repository": "https://github.com/zouravand/vue-cal",
