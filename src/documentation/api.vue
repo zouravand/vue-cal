@@ -51,6 +51,7 @@ div
     specialHours:           [Object],          default: {}
     splitDays:              [Array],           default: []
     startWeekOnSunday:      [Boolean],         default: false
+    startWeekOnSaturday:      [Boolean],         default: false
     stickySplitLabels:      [Boolean],         default: false
     time:                   [Boolean],         default: true
     timeCellHeight:         [Number],          default: 40 // In pixels.
@@ -301,6 +302,11 @@ div
       span.code [Boolean], default: false
       p.
         By default weeks start on Monday but with this option you can start the week on Sunday.
+    li
+      code.mr2 startWeekOnSaturday
+      span.code [Boolean], default: false
+      p.
+        By default weeks start on Monday but with this option you can start the week on Saturday.
     li
       code.mr2 small
       span.code [Boolean], default: false
