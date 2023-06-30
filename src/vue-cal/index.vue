@@ -244,6 +244,7 @@ export default {
     specialHours: { type: Object, default: () => ({}) },
     splitDays: { type: Array, default: () => [] },
     startWeekOnSunday: { type: Boolean, default: false },
+    startWeekOnSaturday: {type: Boolean, default: false},
     stickySplitLabels: { type: Boolean, default: false },
     time: { type: Boolean, default: true },
     timeCellHeight: { type: Number, default: 40 }, // In pixels.
@@ -479,8 +480,13 @@ export default {
 
           // If the first day of the month is not a FirstDayOfWeek (Monday or Sunday), prepend missing days to the days array.
           let startDate = new Date(this.view.startDate)
-          if (startDate.getDay() !== (this.startWeekOnSunday ? 0 : 1)) {
-            startDate = ud.getPreviousFirstDayOfWeek(startDate, this.startWeekOnSunday)
+          let startWeekOffset = 1;
+          if (this.startWeekOnSunday)
+            startWeekOffset = 0;
+          if (this.startWeekOnSaturday)
+            startWeekOffset = 6;
+          if (startDate.getDay() !== startWeekOffset) {
+            startDate = ud.getPreviousFirstDayOfWeek(startDate, this.startWeekOnSunday, this.startWeekOnSaturday)
           }
 
           // Used in viewCells computed array & returned in emitted events.
@@ -489,9 +495,14 @@ export default {
           this.view.lastCellDate.setHours(23, 59, 59, 0)
 
           if (this.hideWeekends) {
+            let startWeekOffset = 2;
+            if (this.startWeekOnSunday)
+              startWeekOffset = 1;
+            if (this.startWeekOnSaturday)
+              startWeekOffset = 0;
             // Remove first weekend from firstCellDate if hide-weekends.
             if ([0, 6].includes(this.view.firstCellDate.getDay())) {
-              const daysToAdd = this.view.firstCellDate.getDay() === 6 && !this.startWeekOnSunday ? 2 : 1
+              const daysToAdd = this.view.firstCellDate.getDay() === 6 && startWeekOffset
               this.view.firstCellDate = ud.addDays(this.view.firstCellDate, daysToAdd)
             }
             // Remove first weekend from startDate if hide-weekends.
@@ -501,7 +512,7 @@ export default {
             }
             // Remove last weekend from lastCellDate if hide-weekends.
             if ([0, 6].includes(this.view.lastCellDate.getDay())) {
-              const daysToSubtract = this.view.lastCellDate.getDay() === 0 && !this.startWeekOnSunday ? 2 : 1
+              const daysToSubtract = this.view.lastCellDate.getDay() === 0 && startWeekOffset
               this.view.lastCellDate = ud.subtractDays(this.view.lastCellDate, daysToSubtract)
             }
             // Remove last weekend from endDate if hide-weekends.
@@ -513,9 +524,13 @@ export default {
           break
         }
         case 'week': {
-          date = ud.getPreviousFirstDayOfWeek(date, this.startWeekOnSunday)
+          date = ud.getPreviousFirstDayOfWeek(date, this.startWeekOnSunday, this.startWeekOnSaturday)
           const weekDaysCount = this.hideWeekends ? 5 : 7
-          this.view.startDate = this.hideWeekends && this.startWeekOnSunday ? ud.addDays(date, 1) : date
+          if (this.startWeekOnSunday)
+            ud.addDays(date, 1)
+          if (this.startWeekOnSaturday)
+            ud.addDays(date, 2)
+          this.view.startDate = this.hideWeekends && date
           this.view.startDate.setHours(0, 0, 0, 0)
           this.view.endDate = ud.addDays(date, weekDaysCount)
           this.view.endDate.setSeconds(-1) // End at 23:59:59.
@@ -540,7 +555,11 @@ export default {
       this.$emit('update:activeView', view)
 
       if (this.ready) {
-        const startDate = this.view.startDate
+        let startDate = this.view.startDate
+        if (this.startWeekOnSunday)
+          ud.addDays(startDate, 1)
+        if (this.startWeekOnSaturday)
+          ud.addDays(startDate, 2)
         const params = {
           view,
           startDate,
@@ -551,7 +570,7 @@ export default {
             outOfScopeEvents: this.view.outOfScopeEvents.map(this.cleanupEvent)
           } : {}),
           events: this.view.events.map(this.cleanupEvent),
-          ...(this.isWeekView ? { week: ud.getWeek(this.startWeekOnSunday ? ud.addDays(startDate, 1) : startDate) } : {})
+          ...(this.isWeekView ? {week: ud.getWeek(startDate)} : {})
         }
         this.$emit('view-change', params)
       }
@@ -598,9 +617,12 @@ export default {
           break
         case 'day':
           firstCellDate = ud[next ? 'addDays' : 'subtractDays'](startDate, 1)
-          const weekDay = firstCellDate.getDay() // 0 to 6 with Sunday at position 0.
-          const weekDayIndex = this.startWeekOnSunday ? weekDay : ((weekDay || 7) - 1)
-          const isDayHidden = this.weekDays[weekDayIndex].hide
+          let weekDay = firstCellDate.getDay() // 0 to 6 with Sunday at position 0.
+          if (!this.startWeekOnSunday)
+            weekDay = ((weekDay || 7) - 1);
+          if (this.startWeekOnSaturday)
+            weekDay = ((weekDay || 7) + 1) % 7
+          const isDayHidden = this.weekDays[weekDay].hide
 
           // If the day to show on the day view is listed as hidden by hideWeekdays or hideWeekends,
           // show the next one that is not hidden if navigating forward, or show the previous available
@@ -1163,7 +1185,11 @@ export default {
       const ud = this.utils.date
       const firstCellWeekNumber = this.firstCellDateWeekNumber
       const currentWeekNumber = firstCellWeekNumber + weekFromFirstCell
-      const modifier = this.startWeekOnSunday ? 1 : 0
+      let modifier = 0
+      if (this.startWeekOnSunday)
+        modifier = 1
+      if (this.startWeekOnSaturday)
+        modifier = 2
 
       if (currentWeekNumber > 52) {
         return ud.getWeek(ud.addDays(this.view.firstCellDate, 7 * weekFromFirstCell + modifier))
@@ -1282,13 +1308,17 @@ export default {
 
     // Emit the `ready` event with useful parameters.
     const startDate = this.view.startDate
+    if (this.startWeekOnSunday)
+      ud.addDays(startDate, 1)
+    if (this.startWeekOnSaturday)
+      ud.addDays(startDate, 2)
     const params = {
       view: this.view.id,
       startDate,
       endDate: this.view.endDate,
       ...(this.isMonthView ? { firstCellDate: this.view.firstCellDate, lastCellDate: this.view.lastCellDate } : {}),
       events: this.view.events.map(this.cleanupEvent),
-      ...(this.isWeekView ? { week: ud.getWeek(this.startWeekOnSunday ? ud.addDays(startDate, 1) : startDate) } : {})
+      ...(this.isWeekView ? {week: ud.getWeek(startDate)} : {})
     }
 
     this.$emit('ready', params)
@@ -1350,8 +1380,12 @@ export default {
     },
     firstCellDateWeekNumber () {
       const ud = this.utils.date
-      const date = this.view.firstCellDate
-      return ud.getWeek(this.startWeekOnSunday ? ud.addDays(date, 1) : date)
+      let date = this.view.firstCellDate
+      if (this.startWeekOnSunday)
+        ud.addDays(date, 1)
+      if (this.startWeekOnSaturday)
+        ud.addDays(date, 2)
+      return ud.getWeek(date)
     },
     // For week & day views.
     timeCells () {
@@ -1428,7 +1462,8 @@ export default {
         hide: (this.hideWeekends && i >= 5) || (this.hideWeekdays.length && this.hideWeekdays.includes(i + 1))
       }))
 
-      if (this.startWeekOnSunday) weekDays.unshift(weekDays.pop())
+      if (this.startWeekOnSunday || this.startWeekOnSaturday) weekDays.unshift(weekDays.pop())
+      if (this.startWeekOnSaturday) weekDays.unshift(weekDays.pop())
 
       return weekDays
     },
@@ -1500,7 +1535,11 @@ export default {
               else formattedMonthYear = `${m1} ${y1} - ${m2} ${y2}`
             }
           }
-          title = `${this.texts.week} ${ud.getWeek(this.startWeekOnSunday ? ud.addDays(date, 1) : date)} (${formattedMonthYear})`
+          if (this.startWeekOnSunday)
+            ud.addDays(date, 1)
+          if (this.startWeekOnSaturday)
+            ud.addDays(date, 2)
+          title = `${this.texts.week} ${ud.getWeek(date)} (${formattedMonthYear})`
           break
         }
         case 'day': {
@@ -1599,7 +1638,12 @@ export default {
           const weekDays = this.weekDays
 
           cells = weekDays.map((cell, i) => {
-            const startDate = ud.addDays(firstDayOfWeek, this.startWeekOnSunday ? i - 1 : i)
+            let startWeekOffset = i;
+            if (this.startWeekOnSunday)
+              startWeekOffset = i - 1;
+            if (this.startWeekOnSaturday)
+              startWeekOffset = i - 2;
+            const startDate = ud.addDays(firstDayOfWeek, startWeekOffset)
             const endDate = new Date(startDate)
             endDate.setHours(23, 59, 59, 0) // End at 23:59:59.
             const dayOfWeek = (startDate.getDay() || 7) - 1 // Day of the week from 0 to 6 with 6 = Sunday.
