@@ -17,7 +17,7 @@
               span.full {{ heading.full }}
               span.small {{ heading.small }}
               span.xsmall {{ heading.xsmall }}
-              span(v-if="heading.dayOfMonth") &nbsp;{{ heading.dayOfMonth }}
+              span(v-if="vuecal.showDayOfMonth && heading.dayOfMonth") &nbsp;{{ heading.dayOfMonth }}
           .vuecal__flex.vuecal__split-days-headers(
             v-if="vuecal.hasSplits && vuecal.stickySplitLabels"
             grow)
@@ -54,12 +54,7 @@ export default {
 
       let todayFound = false
       const headings = this.weekDays.map((cell, i) => {
-        let startWeekOffset = i;
-        if(this.vuecal.startWeekOnSunday)
-          startWeekOffset = i - 1;
-        if(this.vuecal.startWeekOnSaturday)
-          startWeekOffset = i - 2;
-        const date = this.utils.date.addDays(this.view.startDate, startWeekOffset)
+        const date = this.utils.date.addDays(this.view.startDate, i)
 
         return {
           hide: cell.hide,

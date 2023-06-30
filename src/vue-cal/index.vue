@@ -239,6 +239,7 @@ export default {
     showAllDayEvents: { type: [Boolean, String], default: false },
     showTimeInCells: { type: Boolean, default: false },
     showWeekNumbers: { type: [Boolean, String], default: false },
+    showDayOfMonth: { type: [Boolean, String], default: false },
     snapToTime: { type: Number, default: 0 },
     small: { type: Boolean, default: false },
     specialHours: { type: Object, default: () => ({}) },
@@ -1638,12 +1639,7 @@ export default {
           const weekDays = this.weekDays
 
           cells = weekDays.map((cell, i) => {
-            let startWeekOffset = i;
-            if (this.startWeekOnSunday)
-              startWeekOffset = i - 1;
-            if (this.startWeekOnSaturday)
-              startWeekOffset = i - 2;
-            const startDate = ud.addDays(firstDayOfWeek, startWeekOffset)
+            const startDate = ud.addDays(firstDayOfWeek, i)
             const endDate = new Date(startDate)
             endDate.setHours(23, 59, 59, 0) // End at 23:59:59.
             const dayOfWeek = (startDate.getDay() || 7) - 1 // Day of the week from 0 to 6 with 6 = Sunday.
